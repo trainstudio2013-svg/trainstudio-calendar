@@ -1327,14 +1327,35 @@ function sendAssignmentEmail(ev, staffIndex){
   var member = STAFF[staffIndex];
   if(!member.email) return;
   var role = ev.roles[staffIndex] || 'Μέλος ομάδας';
-  var subject = 'Train Studio: ' + ev.title + ' - ' + ev.date;
+  var dateParts = ev.date.split('-');
+  var greekDate = dateParts[2] + '/' + dateParts[1] + '/' + dateParts[0];
+
+  // Ομάδα εκδήλωσης
+  var teamLines = '';
+  if(ev.assigned && ev.assigned.length > 0){
+    teamLines = '\nΟμάδα εκδήλωσης:\n';
+    ev.assigned.forEach(function(si){
+      var s = STAFF[si];
+      if(s) teamLines += '• ' + s.name + (ev.roles[si] && ev.roles[si]!=='—' ? ' — ' + ev.roles[si] : '') + '\n';
+    });
+  }
+
+  // Οχήματα
+  var vehicleLines = '';
+  if(ev.vehicles && ev.vehicles.length > 0){
+    vehicleLines = '\nΟχήματα: ' + ev.vehicles.join(', ') + '\n';
+  }
+
+  var subject = 'Train Studio: ' + ev.title + ' - ' + greekDate;
   var body = 'Γεια σου ' + member.name + ',\n\n'
     + 'Έχεις ανατεθεί στην παρακάτω εκδήλωση:\n\n'
     + 'Εκδήλωση: ' + ev.title + '\n'
-    + 'Ημερομηνία: ' + ev.date + '\n'
+    + 'Ημερομηνία: ' + greekDate + '\n'
     + 'Ώρα: ' + (ev.time || '—') + '\n'
-    + 'Ρόλος: ' + role + '\n\n'
-    + 'Μπες στο ημερολόγιο για να επιβεβαιώσεις:\n'
+    + 'Ρόλος: ' + role + '\n'
+    + teamLines
+    + vehicleLines
+    + '\nΜπες στο ημερολόγιο για να επιβεβαιώσεις:\n'
     + 'https://trainstudio2013-svg.github.io/trainstudio-calendar\n\n'
     + 'Train Studio';
   var mailto = 'mailto:' + member.email
