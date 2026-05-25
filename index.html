@@ -912,20 +912,44 @@ function buildStaffRow(parent,ev,sti){
 var ADMIN_PIN = '2754';
 
 function adminBypass(){
-  var pin = prompt('PIN διαχειριστή:');
-  if(pin === null) return;
-  if(pin !== ADMIN_PIN){
-    alert('Λάθος PIN!');
-    return;
+  // Custom PIN dialog με τελίτσες
+  var overlay = document.createElement('div');
+  overlay.id = 'pinOverlay';
+  overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.5);display:flex;align-items:center;justify-content:center;z-index:3000;';
+  overlay.innerHTML = '<div style="background:#fff;border-radius:16px;padding:32px;width:300px;max-width:90vw;box-shadow:0 20px 60px rgba(0,0,0,.3);text-align:center;">'
+    + '<div style="font-size:24px;margin-bottom:8px;">🔐</div>'
+    + '<div style="font-size:16px;font-weight:700;color:#1a1d23;margin-bottom:16px;">PIN Διαχειριστή</div>'
+    + '<input id="pinInput" type="password" maxlength="10" placeholder="••••" style="width:100%;padding:10px 12px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:20px;text-align:center;letter-spacing:6px;font-family:\'DM Sans\',sans-serif;outline:none;box-sizing:border-box;margin-bottom:12px;">'
+    + '<div id="pinError" style="font-size:12px;color:#dc2626;margin-bottom:10px;display:none;">Λάθος PIN!</div>'
+    + '<div style="display:flex;gap:8px;">'
+    + '<button onclick="document.getElementById(\'pinOverlay\').remove();" style="flex:1;padding:10px;background:#f1f5f9;border:none;border-radius:8px;font-size:14px;cursor:pointer;font-family:\'DM Sans\',sans-serif;">Άκυρο</button>'
+    + '<button id="pinOkBtn" style="flex:1;padding:10px;background:#2563eb;color:#fff;border:none;border-radius:8px;font-size:14px;font-weight:600;cursor:pointer;font-family:\'DM Sans\',sans-serif;">Είσοδος</button>'
+    + '</div></div>';
+  document.body.appendChild(overlay);
+
+  var input = document.getElementById('pinInput');
+  input.focus();
+
+  function checkPin(){
+    if(input.value === ADMIN_PIN){
+      overlay.remove();
+      curUser = 0;
+      sessionStorage.setItem('ts_user','0');
+      document.getElementById('usel').value = 0;
+      document.getElementById('loginPage').style.display='none';
+      updateTopbarUser();
+      renderCal();
+      checkToday();
+      loadSB();
+    } else {
+      document.getElementById('pinError').style.display='block';
+      input.value='';
+      input.focus();
+    }
   }
-  curUser = 0;
-  sessionStorage.setItem('ts_user','0');
-  document.getElementById('usel').value = 0;
-  document.getElementById('loginPage').style.display='none';
-  updateTopbarUser();
-  renderCal();
-  checkToday();
-  loadSB();
+
+  document.getElementById('pinOkBtn').addEventListener('click', checkPin);
+  input.addEventListener('keydown', function(e){ if(e.key==='Enter') checkPin(); });
 }
 
 function showForceChangePassword(token, userIndex){
@@ -1364,23 +1388,25 @@ function sendAssignmentEmail(ev, staffIndex){
   window.location.href = mailto;
 }
 
-document.getElementById('loginBtn').addEventListener('click', doLogin);
-document.getElementById('loginPass').addEventListener('keydown', function(e){
-  if(e.key==='Enter') doLogin();
-});
+document.addEventListener('DOMContentLoaded', function(){
+  document.getElementById('loginBtn').addEventListener('click', doLogin);
+  document.getElementById('loginPass').addEventListener('keydown', function(e){
+    if(e.key==='Enter') doLogin();
+  });
 
-// Παναγιώτης (index 0) — μπαίνει αυτόματα χωρίς login
-var savedUser = sessionStorage.getItem('ts_user');
-if(savedUser!==null){
-  curUser = parseInt(savedUser);
-  currentAccessToken = sessionStorage.getItem('ts_token')||null;
-  document.getElementById('usel').value = curUser;
-  document.getElementById('loginPage').style.display='none';
-  updateTopbarUser();
-  renderCal();
-  checkToday();
-  loadSB();
-}
+  // Παναγιώτης (index 0) — μπαίνει αυτόματα χωρίς login
+  var savedUser = sessionStorage.getItem('ts_user');
+  if(savedUser!==null){
+    curUser = parseInt(savedUser);
+    currentAccessToken = sessionStorage.getItem('ts_token')||null;
+    document.getElementById('usel').value = curUser;
+    document.getElementById('loginPage').style.display='none';
+    updateTopbarUser();
+    renderCal();
+    checkToday();
+    loadSB();
+  }
+});
 // ────────────────────────────────────────────────────────
 </script>
 
