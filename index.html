@@ -270,7 +270,7 @@ var STAFF=[
 var SB_URL='https://dhignagzgufqkhizgqrl.supabase.co';
 var SB_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRoaWduYWd6Z3VmcWtoaXpncXJsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzkyOTUzOTEsImV4cCI6MjA5NDg3MTM5MX0.j6oNTTiPZCFEhIqwkDLBfba7ouNkOEPPnHwk4WVI8Xg';
 var TODAY=new Date();
-var curY=2026,curM=4,selDay=null,curUser=0,sideOpen=false,collapseId=null;
+var curY=TODAY.getFullYear(),curM=TODAY.getMonth(),selDay=null,curUser=0,sideOpen=false,collapseId=null;
 
 function isAdmin(){return STAFF[curUser].admin;}
 function isPortrait(){return window.innerWidth<=600&&window.innerHeight>window.innerWidth;}
