@@ -148,7 +148,18 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);hei
   .topbar-right{gap:5px}
   #topbarExtra button{font-size:10px;padding:4px 7px}
 }
+/* MOBILE EVENT LIST */
+.mobile-ev-list{display:none}
 @media(max-width:600px) and (orientation:portrait){
+  .mobile-ev-list{display:flex;flex-direction:column;gap:6px;overflow-y:auto;flex:1;padding:6px 2px 8px 2px;margin-top:6px;-webkit-overflow-scrolling:touch}
+  .mobile-ev-item{display:flex;align-items:center;gap:10px;background:#fff;border-radius:10px;padding:9px 12px;box-shadow:0 1px 4px rgba(0,0,0,.07);cursor:pointer;border:1.5px solid #e2e8f0;flex-shrink:0}
+  .mobile-ev-item:active{background:#f1f5f9}
+  .mobile-ev-dot{width:12px;height:12px;border-radius:50%;flex-shrink:0}
+  .mobile-ev-info{flex:1;min-width:0}
+  .mobile-ev-title{font-size:13px;font-weight:600;color:#1e293b;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .mobile-ev-date{font-size:11px;color:#64748b;margin-top:1px}
+  .mobile-ev-time{font-size:11px;color:#94a3b8;flex-shrink:0}
+  .mobile-ev-empty{text-align:center;color:#94a3b8;font-size:13px;padding:20px 0}
   .side,.side-toggle{display:none!important}
   .topbar{height:auto;min-height:44px;padding:6px 10px;flex-wrap:nowrap}
   body{overflow:hidden;overscroll-behavior:none}
@@ -246,6 +257,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);hei
       <div class="dn">ΠΕΜ</div><div class="dn">ΠΑΡ</div><div class="dn">ΣΑΒ</div><div class="dn">ΚΥΡ</div>
     </div>
     <div class="cal-grid" id="cgrid"></div>
+    <div class="mobile-ev-list" id="mobileEvList"></div>
   </div>
   <div class="side-toggle hidden" id="sideToggle" title="Άνοιγμα/Κλείσιμο λεπτομερειών">
     <span id="toggleArrow">&#8249;</span>
@@ -398,6 +410,7 @@ function renderCal(){
     var c=document.createElement('div');c.className='cell other';
     c.innerHTML='<div class="dnum">'+i+'</div>';grid.appendChild(c);
   }
+  renderMobileList();
 }
 
 /* SIDE PANEL CONTENT — built with DOM, no innerHTML for interactive elements */
@@ -1155,6 +1168,102 @@ function toggleSide(){
 }
 
 function selectDay(d){selDay=d;renderCal();renderSide(d);}
+
+function renderMobileList(){
+  var el=document.getElementById('mobileEvList');
+  if(!el) return;
+  // Εμφάνιση μόνο σε portrait
+  if(window.innerWidth>600||window.innerHeight<window.innerWidth) return;
+  var TODAY_STR=curY+'-'+pad(curM+1)+'-01';
+  var todayFull=new Date();
+  var todayStr=todayFull.getFullYear()+'-'+pad(todayFull.getMonth()+1)+'-'+pad(todayFull.getDate());
+  var DAYS_GR=['Κυρ','Δευ','Τρι','Τετ','Πεμ','Παρ','Σαβ'];
+  var MONTHS_GR=['Ιαν','Φεβ','Μαρ','Απρ','Μαΐ','Ιουν','Ιουλ','Αυγ','Σεπ','Οκτ','Νοε','Δεκ'];
+  var catColors={megaro:'#7c3aed',other:'#d97706',studio:'#059669',ds:'#0284c7'};
+  var catLabels={megaro:'Μέγαρο',other:'Εκδήλωση',studio:'Στούντιο',ds:'ΔΣ'};
+
+  // Φιλτράρισμα εκδηλώσεων: τρέχων μήνας, από σήμερα, μόνο οι δικές μου αν non-admin
+  var evs=EVENTS.filter(function(ev){
+    if(!ev.date) return false;
+    var parts=ev.date.split('-');
+    var evYear=parseInt(parts[0]),evMonth=parseInt(parts[1])-1;
+    if(evYear!==curY||evMonth!==curM) return false;
+    if(ev.date<todayStr) return false;
+    if(!isAdmin()&&ev.assigned.indexOf(curUser)===-1) return false;
+    return true;
+  });
+  evs.sort(function(a,b){return a.date.localeCompare(b.date);});
+
+  el.innerHTML='';
+  if(evs.length===0){
+    var empty=document.createElement('div');
+    empty.className='mobile-ev-empty';
+    empty.textContent='Δεν υπάρχουν εκδηλώσεις αυτό τον μήνα';
+    el.appendChild(empty);
+    return;
+  }
+
+  evs.forEach(function(ev){
+    var parts=ev.date.split('-');
+    var d=new Date(parseInt(parts[0]),parseInt(parts[1])-1,parseInt(parts[2]));
+    var dayName=DAYS_GR[d.getDay()];
+    var dateStr=parseInt(parts[2])+' '+MONTHS_GR[parseInt(parts[1])-1];
+
+    var item=document.createElement('div');
+    item.className='mobile-ev-item';
+
+    var dot=document.createElement('div');
+    dot.className='mobile-ev-dot';
+    dot.style.background=catColors[ev.cat]||catColors.other;
+
+    var info=document.createElement('div');
+    info.className='mobile-ev-info';
+
+    var title=document.createElement('div');
+    title.className='mobile-ev-title';
+    title.textContent=ev.title;
+
+    var date=document.createElement('div');
+    date.className='mobile-ev-date';
+    date.textContent=dayName+' '+dateStr;
+
+    info.appendChild(title);
+    info.appendChild(date);
+
+    var time=document.createElement('div');
+    time.className='mobile-ev-time';
+    time.textContent=ev.time||'';
+
+    item.appendChild(dot);
+    item.appendChild(info);
+    item.appendChild(time);
+
+    // Άνοιγμα drawer με λεπτομέρειες
+    item.addEventListener('click',(function(evRef){
+      return function(){
+        var ds=evRef.date;
+        var dayEvs=EVENTS.filter(function(e){return e.date===ds;});
+        var drawerBody=document.getElementById('drawerBody');
+        drawerBody.innerHTML='';
+        buildPanel(drawerBody,dayEvs,ds);
+        document.getElementById('drawer').classList.add('open');
+        document.getElementById('drawerOverlay').classList.add('open');
+        // Scroll στη σωστή εκδήλωση
+        setTimeout(function(){
+          var cards=drawerBody.querySelectorAll('.ev-card');
+          cards.forEach(function(card){
+            if(card.dataset.evid===String(evRef.id)){
+              card.scrollIntoView({behavior:'smooth',block:'start'});
+              card.style.outline='2px solid #2563eb';
+            }
+          });
+        },100);
+      };
+    })(ev));
+
+    el.appendChild(item);
+  });
+}
 
 function checkToday(){
   var isNow=curY===TODAY.getFullYear()&&curM===TODAY.getMonth();
