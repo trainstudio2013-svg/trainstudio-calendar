@@ -26,9 +26,10 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);hei
 .today-btn{display:none;font-size:12px;padding:5px 12px;background:var(--accent-light);border:1.5px solid var(--accent);color:var(--accent);border-radius:8px;cursor:pointer;font-family:'DM Sans',sans-serif;font-weight:600}
 .today-btn.vis{display:block}
 /* LAYOUT */
-.layout{display:flex;height:calc(100vh - 52px);position:relative;overflow:hidden}
-.cal-wrap{flex:1;padding:18px 18px 24px 18px;overflow:hidden;min-width:0;background:var(--bg);display:flex;flex-direction:column}
-.cal-nav{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;flex-wrap:wrap;gap:8px;flex-shrink:0}
+.layout{display:flex;flex-direction:column;height:calc(100vh - 52px);position:relative;overflow:hidden}
+.layout-body{display:flex;flex:1;overflow:hidden;min-height:0}
+.cal-wrap{flex:1;padding:8px 18px 24px 18px;overflow:hidden;min-width:0;background:var(--bg);display:flex;flex-direction:column}
+.cal-nav{display:flex;align-items:center;justify-content:space-between;padding:8px 18px 4px 18px;flex-wrap:wrap;gap:8px;flex-shrink:0;background:var(--bg)}
 .cal-month{font-size:22px;font-weight:700;color:var(--text);letter-spacing:-.5px}
 .nav-btns{display:flex;gap:6px;align-items:center}
 .nbtn{width:30px;height:30px;background:#fff;border:1px solid var(--border);color:var(--text2);border-radius:8px;cursor:pointer;font-size:16px;display:flex;align-items:center;justify-content:center}
@@ -166,9 +167,10 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);hei
   #topbarExtra button{font-size:11px;padding:4px 8px}
   .logo img{width:32px;height:32px}
   body{overflow:hidden;overscroll-behavior:none}
-  .layout{height:calc(100vh - 52px)!important;overflow:hidden}
-  .cal-wrap{height:100%;padding:6px 6px 4px 6px;overflow:hidden;display:flex;flex-direction:column;gap:0;touch-action:pan-x}
-  .cal-nav{display:flex!important;flex-direction:row!important;align-items:center!important;justify-content:space-between!important;flex-wrap:nowrap!important;gap:4px;margin-bottom:4px;flex-shrink:0;height:32px}
+  .layout{height:calc(100vh - 52px)!important;overflow:hidden;flex-direction:column}
+  .layout-body{flex:1;min-height:0;overflow:hidden}
+  .cal-wrap{height:100%;padding:4px 6px 4px 6px;overflow:hidden;display:flex;flex-direction:column;gap:0;touch-action:pan-x}
+  .cal-nav{flex-direction:row!important;flex-wrap:nowrap!important;padding:4px 8px!important;gap:4px;height:36px;flex-shrink:0}
   .nav-btns{display:flex!important;gap:5px;align-items:center;flex-shrink:0}
   .nbtn{width:26px;height:26px;font-size:14px}
   .legend{display:none!important}
@@ -238,23 +240,24 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);hei
     </select>
   </div>
 </div>
-<div class="layout">
-  <div class="cal-wrap">
-    <div class="cal-nav">
-      <div class="nav-btns">
-        <button class="nbtn" id="prevBtn">&#8249;</button>
-        <div class="cal-month" id="ctitle"></div>
-        <button class="nbtn" id="nextBtn">&#8250;</button>
-        <button class="today-btn" id="todayBtn">&#128197; Σήμερα</button>
-      </div>
-      <div class="legend">
-        <div class="leg"><div class="leg-dot" style="background:#7c3aed"></div>Μέγαρο</div>
-        <div class="leg"><div class="leg-dot" style="background:#b8a000"></div>Εκδήλωση</div>
-        <div class="leg"><div class="leg-dot" style="background:#059669"></div>Στούντιο</div>
-        <div class="leg"><div class="leg-dot" style="background:#0369a1"></div>ΔΣ</div>
-        <div class="leg"><div class="leg-dot" style="background:#ea580c"></div>Εξοπλισμός</div>
-      </div>
+<div class="layout" style="flex-direction:column">
+  <div class="cal-nav" id="calNav">
+    <div class="nav-btns">
+      <button class="nbtn" id="prevBtn">&#8249;</button>
+      <div class="cal-month" id="ctitle"></div>
+      <button class="nbtn" id="nextBtn">&#8250;</button>
+      <button class="today-btn" id="todayBtn">&#128197; Σήμερα</button>
     </div>
+    <div class="legend">
+      <div class="leg"><div class="leg-dot" style="background:#7c3aed"></div>Μέγαρο</div>
+      <div class="leg"><div class="leg-dot" style="background:#b8a000"></div>Εκδήλωση</div>
+      <div class="leg"><div class="leg-dot" style="background:#059669"></div>Στούντιο</div>
+      <div class="leg"><div class="leg-dot" style="background:#0369a1"></div>ΔΣ</div>
+      <div class="leg"><div class="leg-dot" style="background:#ea580c"></div>Εξοπλισμός</div>
+    </div>
+  </div>
+  <div class="layout-body" style="display:flex;flex:1;overflow:hidden;min-height:0">
+  <div class="cal-wrap">
     <div class="cal-head">
       <div class="dn">ΔΕΥ</div><div class="dn">ΤΡΙ</div><div class="dn">ΤΕΤ</div>
       <div class="dn">ΠΕΜ</div><div class="dn">ΠΑΡ</div><div class="dn">ΣΑΒ</div><div class="dn">ΚΥΡ</div>
@@ -262,6 +265,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);hei
     <div class="cal-grid" id="cgrid"></div>
     <div class="mobile-ev-list" id="mobileEvList"></div>
   </div>
+  </div><!-- /layout-body -->
   <div class="side-toggle hidden" id="sideToggle" title="Άνοιγμα/Κλείσιμο λεπτομερειών">
     <span id="toggleArrow">&#8249;</span>
   </div>
