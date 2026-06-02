@@ -189,21 +189,20 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);hei
   .drawer-body{padding:4px 12px 60px}
 }
 @media(orientation:landscape) and (max-height:500px){
+  /* Κινητό σε landscape — κρύβουμε ημερολόγιο, δείχνουμε μόνο λίστα */
+  .side,.side-toggle{display:none!important}
+  .cal-head{display:none!important}
+  .cal-grid{display:none!important}
+  .cal-nav{padding:6px 12px!important;flex-shrink:0}
+  .cal-month{font-size:14px}
+  .nbtn{width:26px;height:26px;font-size:14px}
+  .legend{display:none!important}
+  .layout-body{flex-direction:column}
+  .cal-wrap{padding:0 8px 8px 8px;overflow:hidden;display:flex;flex-direction:column}
+  .mobile-ev-list{display:flex!important;flex:1;overflow-y:auto;gap:6px;flex-direction:column;padding:4px 0 8px 0;-webkit-overflow-scrolling:touch}
+  .mobile-ev-item{flex-shrink:0}
   .topbar{height:44px;padding:0 10px}
-  .layout{height:calc(100vh - 44px)}
-  .cal-wrap{padding:4px 6px 8px 6px;overflow:hidden}
-  .cal-nav{margin-bottom:3px}
-  .cal-month{font-size:13px}
-  .nbtn{width:22px;height:22px;font-size:12px}
-  .cal-head{gap:2px;margin-bottom:2px}
-  .dn{font-size:9px;padding:1px 0}
-  .cal-grid{gap:2px}
-  .cell{padding:2px 3px;border-radius:6px;min-height:40px}
-  .dnum{font-size:9px;margin-bottom:1px}
-  .pill{font-size:8px;padding:1px 3px;display:block}
-  .ev-dot{width:4px;height:4px;bottom:2px}
-  .side{width:260px}
-  --side-w:260px;
+  .layout{height:calc(100vh - 44px);flex-direction:column}
 }
 
 /* LOGIN PAGE */
@@ -1179,8 +1178,8 @@ function selectDay(d){selDay=d;renderCal();renderSide(d);}
 function renderMobileList(){
   var el=document.getElementById('mobileEvList');
   if(!el) return;
-  // Εμφάνιση μόνο σε portrait
-  if(window.innerWidth>600||window.innerHeight<window.innerWidth) return;
+  // Εμφάνιση σε portrait ΚΑΙ landscape mobile
+  if(window.innerWidth>900) return;
   var TODAY_STR=curY+'-'+pad(curM+1)+'-01';
   var todayFull=new Date();
   var todayStr=todayFull.getFullYear()+'-'+pad(todayFull.getMonth()+1)+'-'+pad(todayFull.getDate());
