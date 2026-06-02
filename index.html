@@ -180,6 +180,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);hei
   .cal-grid{gap:3px;flex:none;display:grid;grid-template-columns:repeat(7,1fr)}
   .cell{height:calc((100vw - 12px - 18px) / 7);max-height:calc((100vw - 12px - 18px) / 7);min-height:0!important;padding:3px;border-radius:8px;box-sizing:border-box}
   .dnum{font-size:11px;margin-bottom:0;text-align:right}
+  #monthSummaryBtn{font-size:10px;padding:4px 7px}
   .staff-row{gap:5px;padding:6px 8px}
   .role-sel{max-width:80px;font-size:9px}
   .btn-mail{font-size:10px;padding:3px 6px}
@@ -253,12 +254,15 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);hei
         <button class="nbtn" id="nextBtn">&#8250;</button>
         <button class="today-btn" id="todayBtn">&#128197; Σήμερα</button>
       </div>
-      <div class="legend">
+      <div style="display:flex;align-items:center;gap:8px">
+        <button id="monthSummaryBtn" onclick="showMonthlySummary()" style="font-size:11px;padding:5px 10px;background:#f1f5f9;border:1px solid #e2e8f0;border-radius:8px;cursor:pointer;font-family:'DM Sans',sans-serif;color:#475569;font-weight:500;white-space:nowrap">📋 Δουλειές μήνα</button>
+        <div class="legend">
         <div class="leg"><div class="leg-dot" style="background:#7c3aed"></div>Μέγαρο</div>
         <div class="leg"><div class="leg-dot" style="background:#b8a000"></div>Εκδήλωση</div>
         <div class="leg"><div class="leg-dot" style="background:#059669"></div>Στούντιο</div>
         <div class="leg"><div class="leg-dot" style="background:#0369a1"></div>ΔΣ</div>
         <div class="leg"><div class="leg-dot" style="background:#ea580c"></div>Εξοπλισμός</div>
+      </div>
       </div>
     </div>
     <div class="cal-head">
@@ -1178,6 +1182,285 @@ function toggleSide(){
 
 function selectDay(d){selDay=d;renderCal();renderSide(d);}
 
+function showMonthlySummary(){
+  var MONTHS_FULL=['Ιανουάριος','Φεβρουάριος','Μάρτιος','Απρίλιος','Μάιος','Ιούνιος','Ιούλιος','Αύγουστος','Σεπτέμβριος','Οκτώβριος','Νοέμβριος','Δεκέμβριος'];
+  var MONTHS_GEN=['Ιανουαρίου','Φεβρουαρίου','Μαρτίου','Απριλίου','Μαΐου','Ιουνίου','Ιουλίου','Αυγούστου','Σεπτεμβρίου','Οκτωβρίου','Νοεμβρίου','Δεκεμβρίου'];
+  var DAYS_GR=['Κυρ','Δευ','Τρι','Τετ','Πεμ','Παρ','Σαβ'];
+  var catColors={megaro:'#7c3aed',other:'#d97706',studio:'#059669',ds:'#0284c7'};
+
+  // Εκδηλώσεις του τρέχοντος μήνα
+  var monthEvs=EVENTS.filter(function(ev){
+    if(!ev.date) return false;
+    var p=ev.date.split('-');
+    return parseInt(p[0])===curY && parseInt(p[1])-1===curM;
+  });
+  monthEvs.sort(function(a,b){return a.date.localeCompare(b.date);});
+
+  var title=document.getElementById('summaryTitle');
+  var content=document.getElementById('summaryContent');
+  title.textContent='📋 '+MONTHS_FULL[curM]+' '+curY;
+  content.innerHTML='';
+
+  if(isAdmin()){
+    // Admin: εμφάνιση ανά μέλος
+    STAFF.forEach(function(st,si){
+      var myEvs=monthEvs.filter(function(ev){return ev.assigned.indexOf(si)!==-1;});
+      var wrap=document.createElement('div');
+      wrap.style.cssText='margin-bottom:18px;';
+
+      var hdr=document.createElement('div');
+      hdr.style.cssText='display:flex;align-items:center;gap:8px;margin-bottom:8px;padding-bottom:6px;border-bottom:1px solid #e2e8f0';
+      var av=document.createElement('div');
+      var col=COLORS[si%COLORS.length];
+      av.style.cssText='width:28px;height:28px;border-radius:50%;background:'+col+';display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;color:#fff;flex-shrink:0';
+      av.textContent=st.name.substring(0,2).toUpperCase();
+      var name=document.createElement('div');
+      name.style.cssText='font-size:13px;font-weight:700;color:#1e293b;flex:1';
+      name.textContent=st.name;
+      var cnt=document.createElement('div');
+      cnt.style.cssText='font-size:11px;color:#64748b;background:#f1f5f9;padding:2px 8px;border-radius:12px';
+      cnt.textContent=myEvs.length+' εργασίες';
+      var pBtn=document.createElement('button');
+      pBtn.textContent='🖨';
+      pBtn.title='Εκτύπωση';
+      pBtn.style.cssText='background:none;border:1px solid #e2e8f0;border-radius:6px;padding:2px 6px;cursor:pointer;font-size:13px';
+      pBtn.addEventListener('click',(function(idx){return function(e){e.stopPropagation();printMemberReport(idx);};})(si));
+      hdr.appendChild(av);hdr.appendChild(name);hdr.appendChild(cnt);hdr.appendChild(pBtn);
+      wrap.appendChild(hdr);
+
+      if(myEvs.length===0){
+        var nd=document.createElement('div');
+        nd.style.cssText='font-size:11px;color:#94a3b8;padding:4px 0';
+        nd.textContent='Δεν συμμετείχε σε εκδηλώσεις';
+        wrap.appendChild(nd);
+      } else {
+        myEvs.forEach(function(ev){
+          var p=ev.date.split('-');
+          var d=new Date(parseInt(p[0]),parseInt(p[1])-1,parseInt(p[2]));
+          var row=document.createElement('div');
+          row.style.cssText='display:flex;align-items:center;gap:8px;padding:6px 8px;border-radius:8px;margin-bottom:4px;background:#f8fafc;cursor:pointer';
+          row.addEventListener('click',function(){closeMonthlySummary();setTimeout(function(){
+            var ds=ev.date;var dayEvs=EVENTS.filter(function(e){return e.date===ds;});
+            if(isPortrait()){
+              var db=document.getElementById('drawerBody');db.innerHTML='';
+              buildPanel(db,dayEvs,ds);
+              document.getElementById('drawer').classList.add('open');
+              document.getElementById('drawerOverlay').classList.add('open');
+            } else {
+              buildPanel(document.getElementById('sideInner'),dayEvs,ds);
+            }
+          },200);});
+          var dot=document.createElement('div');
+          dot.style.cssText='width:8px;height:8px;border-radius:50%;background:'+(catColors[ev.cat]||catColors.other)+';flex-shrink:0';
+          var info=document.createElement('div');info.style.cssText='flex:1;min-width:0';
+          var t=document.createElement('div');t.style.cssText='font-size:12px;font-weight:600;color:#1e293b;white-space:nowrap;overflow:hidden;text-overflow:ellipsis';t.textContent=ev.title;
+          var dt=document.createElement('div');dt.style.cssText='font-size:11px;color:#64748b';
+          dt.textContent=DAYS_GR[d.getDay()]+' '+parseInt(p[2])+' '+MONTHS_GEN[parseInt(p[1])-1];
+          var role=document.createElement('div');role.style.cssText='font-size:10px;color:#94a3b8;flex-shrink:0';
+          role.textContent=ev.roles[si]||'';
+          info.appendChild(t);info.appendChild(dt);
+          row.appendChild(dot);row.appendChild(info);row.appendChild(role);
+          wrap.appendChild(row);
+        });
+      }
+      content.appendChild(wrap);
+    });
+  } else {
+    // Non-admin: μόνο οι δικές του
+    var myEvs=monthEvs.filter(function(ev){return ev.assigned.indexOf(curUser)!==-1;});
+    var hdr=document.createElement('div');
+    hdr.style.cssText='font-size:13px;font-weight:600;color:#475569;margin-bottom:12px';
+    hdr.textContent=STAFF[curUser].name+' — '+myEvs.length+' εργασίες '+MONTHS_GEN[curM];
+    content.appendChild(hdr);
+
+    if(myEvs.length===0){
+      var nd=document.createElement('div');nd.style.cssText='text-align:center;color:#94a3b8;padding:30px 0;font-size:13px';
+      nd.textContent='Δεν συμμετείχες σε εκδηλώσεις αυτό τον μήνα';
+      content.appendChild(nd);
+    } else {
+      myEvs.forEach(function(ev){
+        var p=ev.date.split('-');
+        var d=new Date(parseInt(p[0]),parseInt(p[1])-1,parseInt(p[2]));
+        var row=document.createElement('div');
+        row.style.cssText='display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:10px;margin-bottom:6px;background:#f8fafc;border:1px solid #e2e8f0;cursor:pointer';
+        row.addEventListener('click',function(){closeMonthlySummary();setTimeout(function(){
+          var ds=ev.date;var dayEvs=EVENTS.filter(function(e){return e.date===ds;});
+          if(isPortrait()){
+            var db=document.getElementById('drawerBody');db.innerHTML='';
+            buildPanel(db,dayEvs,ds);
+            document.getElementById('drawer').classList.add('open');
+            document.getElementById('drawerOverlay').classList.add('open');
+          } else {
+            buildPanel(document.getElementById('sideInner'),dayEvs,ds);
+          }
+        },200);});
+        var dot=document.createElement('div');
+        dot.style.cssText='width:10px;height:10px;border-radius:50%;background:'+(catColors[ev.cat]||catColors.other)+';flex-shrink:0';
+        var info=document.createElement('div');info.style.cssText='flex:1;min-width:0';
+        var t=document.createElement('div');t.style.cssText='font-size:13px;font-weight:600;color:#1e293b;white-space:nowrap;overflow:hidden;text-overflow:ellipsis';t.textContent=ev.title;
+        var dt=document.createElement('div');dt.style.cssText='font-size:11px;color:#64748b;margin-top:2px';
+        dt.textContent=DAYS_GR[d.getDay()]+' '+parseInt(p[2])+' '+MONTHS_GEN[parseInt(p[1])-1]+' — '+(ev.roles[curUser]||'');
+        info.appendChild(t);info.appendChild(dt);
+        row.appendChild(dot);row.appendChild(info);
+        content.appendChild(row);
+      });
+    }
+  }
+
+  document.getElementById('summaryOverlay').style.display='block';
+  document.getElementById('summaryPanel').style.display='block';
+}
+
+function closeMonthlySummary(){
+  document.getElementById('summaryOverlay').style.display='none';
+  document.getElementById('summaryPanel').style.display='none';
+}
+
+function printMemberReport(si){
+  var MONTHS_FULL=['Ιανουάριος','Φεβρουάριος','Μάρτιος','Απρίλιος','Μάιος','Ιούνιος','Ιούλιος','Αύγουστος','Σεπτέμβριος','Οκτώβριος','Νοέμβριος','Δεκέμβριος'];
+  var MONTHS_GEN=['Ιανουαρίου','Φεβρουαρίου','Μαρτίου','Απριλίου','Μαΐου','Ιουνίου','Ιουλίου','Αυγούστου','Σεπτεμβρίου','Οκτωβρίου','Νοεμβρίου','Δεκεμβρίου'];
+  var DAYS_GR=['Κυριακή','Δευτέρα','Τρίτη','Τετάρτη','Πέμπτη','Παρασκευή','Σάββατο'];
+  var st=STAFF[si];
+
+  // Βρες όλους τους μήνες που έχει εργασίες
+  var monthSet={};
+  EVENTS.forEach(function(ev){
+    if(ev.assigned.indexOf(si)===-1) return;
+    if(!ev.date) return;
+    var p=ev.date.split('-');
+    var key=p[0]+'-'+p[1];
+    monthSet[key]={year:parseInt(p[0]),month:parseInt(p[1])-1};
+  });
+  var months=Object.keys(monthSet).sort();
+
+  // Χτίσε dialog επιλογής μηνών
+  var overlay=document.createElement('div');
+  overlay.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:300;display:flex;align-items:center;justify-content:center';
+
+  var box=document.createElement('div');
+  box.style.cssText='background:#fff;border-radius:14px;padding:24px;width:360px;max-width:95vw;max-height:80vh;overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,.3)';
+
+  var title=document.createElement('div');
+  title.style.cssText='font-size:15px;font-weight:700;color:#1e293b;margin-bottom:4px';
+  title.textContent='Εκτύπωση — '+st.name;
+
+  var sub=document.createElement('div');
+  sub.style.cssText='font-size:12px;color:#64748b;margin-bottom:16px';
+  sub.textContent='Επίλεξε μήνες για εκτύπωση';
+
+  box.appendChild(title);
+  box.appendChild(sub);
+
+  if(months.length===0){
+    var nd=document.createElement('div');
+    nd.style.cssText='color:#94a3b8;font-size:13px;text-align:center;padding:20px 0';
+    nd.textContent='Δεν υπάρχουν εργασίες';
+    box.appendChild(nd);
+  } else {
+    // Checkboxes για κάθε μήνα
+    var checks=[];
+    months.forEach(function(key){
+      var m=monthSet[key];
+      var row=document.createElement('label');
+      row.style.cssText='display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:8px;cursor:pointer;margin-bottom:4px;background:#f8fafc;border:1px solid #e2e8f0';
+      var cb=document.createElement('input');
+      cb.type='checkbox';cb.checked=true;cb.value=key;
+      cb.style.cssText='width:16px;height:16px;cursor:pointer';
+      var lbl=document.createElement('span');
+      lbl.style.cssText='font-size:13px;color:#1e293b;font-weight:500';
+      lbl.textContent=MONTHS_FULL[m.month]+' '+m.year;
+      row.appendChild(cb);row.appendChild(lbl);
+      box.appendChild(row);
+      checks.push(cb);
+    });
+
+    // Κουμπιά
+    var btnRow=document.createElement('div');
+    btnRow.style.cssText='display:flex;gap:8px;margin-top:16px';
+
+    var printBtn=document.createElement('button');
+    printBtn.textContent='🖨 Εκτύπωση';
+    printBtn.style.cssText='flex:1;padding:10px;background:#2563eb;color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;font-family:"DM Sans",sans-serif';
+    printBtn.addEventListener('click',function(){
+      var selMonths=checks.filter(function(c){return c.checked;}).map(function(c){return c.value;});
+      if(selMonths.length===0){alert('Επίλεξε τουλάχιστον έναν μήνα');return;}
+      // Ανοίγουμε το παράθυρο ΑΜΕΣΩΣ μέσα στο click event για να μην μπλοκαριστεί
+      var win=window.open('','_blank');
+      document.body.removeChild(overlay);
+      doPrint(si,selMonths,MONTHS_FULL,MONTHS_GEN,DAYS_GR,win);
+    });
+
+    var cancelBtn=document.createElement('button');
+    cancelBtn.textContent='Ακύρωση';
+    cancelBtn.style.cssText='padding:10px 16px;background:#f1f5f9;color:#475569;border:1px solid #e2e8f0;border-radius:8px;font-size:13px;cursor:pointer;font-family:"DM Sans",sans-serif';
+    cancelBtn.addEventListener('click',function(){document.body.removeChild(overlay);});
+
+    btnRow.appendChild(printBtn);btnRow.appendChild(cancelBtn);
+    box.appendChild(btnRow);
+  }
+
+  overlay.appendChild(box);
+  overlay.addEventListener('click',function(e){if(e.target===overlay)document.body.removeChild(overlay);});
+  document.body.appendChild(overlay);
+}
+
+function doPrint(si,selMonths,MONTHS_FULL,MONTHS_GEN,DAYS_GR,win){
+  var st=STAFF[si];
+  var evsByMonth={};
+  selMonths.forEach(function(k){evsByMonth[k]=[];});
+
+  EVENTS.forEach(function(ev){
+    if(ev.assigned.indexOf(si)===-1||!ev.date) return;
+    var p=ev.date.split('-');
+    var key=p[0]+'-'+p[1];
+    if(evsByMonth[key]) evsByMonth[key].push(ev);
+  });
+  selMonths.forEach(function(k){evsByMonth[k].sort(function(a,b){return a.date.localeCompare(b.date);});});
+
+  var html='<!DOCTYPE html><html><head><meta charset="utf-8">';
+  html+='<title>Εργασίες — '+st.name+'</title>';
+  html+='<style>body{font-family:Arial,sans-serif;padding:30px;color:#1e293b;font-size:13px}';
+  html+='.header{border-bottom:2px solid #2563eb;padding-bottom:12px;margin-bottom:20px}';
+  html+='.name{font-size:20px;font-weight:700;color:#2563eb}';
+  html+='.month{font-size:15px;font-weight:700;margin:20px 0 8px;color:#475569;border-bottom:1px solid #e2e8f0;padding-bottom:4px}';
+  html+='.ev-row{display:flex;gap:16px;padding:7px 0;border-bottom:1px solid #f1f5f9}';
+  html+='.ev-date{min-width:160px;color:#475569}';
+  html+='.ev-title{font-weight:600}';
+  html+='.total{margin-top:6px;font-size:12px;color:#94a3b8}';
+  html+='@media print{body{padding:15px}}</style></head><body>';
+  html+='<div class="header"><div class="name">'+st.name+'</div>';
+  html+='<div style="font-size:12px;color:#64748b;margin-top:4px">Αναφορά εργασιών — Train Studio</div></div>';
+
+  var total=0;
+  selMonths.forEach(function(key){
+    var p=key.split('-');
+    var mIdx=parseInt(p[1])-1;
+    var yr=p[0];
+    var evs=evsByMonth[key];
+    html+='<div class="month">'+MONTHS_FULL[mIdx]+' '+yr+'</div>';
+    if(evs.length===0){
+      html+='<div style="color:#94a3b8;font-size:12px;padding:4px 0">Δεν συμμετείχε σε εκδηλώσεις</div>';
+    } else {
+      evs.forEach(function(ev){
+        var ep=ev.date.split('-');
+        var d=new Date(parseInt(ep[0]),parseInt(ep[1])-1,parseInt(ep[2]));
+        var dateStr=DAYS_GR[d.getDay()]+' '+parseInt(ep[2])+' '+MONTHS_GEN[mIdx];
+        html+='<div class="ev-row"><div class="ev-date">'+dateStr+'</div><div class="ev-title">'+ev.title+'</div></div>';
+        total++;
+      });
+      html+='<div class="total">'+evs.length+' εργασίες</div>';
+    }
+  });
+
+  html+='<div style="margin-top:24px;font-size:11px;color:#94a3b8;border-top:1px solid #e2e8f0;padding-top:12px">Σύνολο: '+total+' εργασίες</div>';
+  html+='</body></html>';
+
+  win.document.write(html);
+  win.document.close();
+  win.focus();
+  win.onload=function(){win.print();};
+}
+
 function renderMobileList(){
   var el=document.getElementById('mobileEvList');
   if(!el) return;
@@ -1665,6 +1948,15 @@ document.addEventListener('DOMContentLoaded', function(){
       <button onclick="adminBypass()" style="background:none;border:none;color:#9ca3af;font-size:11px;cursor:pointer;font-family:'DM Sans',sans-serif;text-decoration:underline;">Είσοδος ως διαχειριστής</button>
     </div>
   </div>
+</div>
+<!-- MONTHLY SUMMARY MODAL -->
+<div id="summaryOverlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:200" onclick="closeMonthlySummary()"></div>
+<div id="summaryPanel" style="display:none;position:fixed;top:0;right:0;width:380px;max-width:100vw;height:100vh;background:#fff;z-index:201;overflow-y:auto;box-shadow:-4px 0 20px rgba(0,0,0,.15);padding:20px">
+  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
+    <div id="summaryTitle" style="font-size:16px;font-weight:700;color:#1e293b"></div>
+    <button onclick="closeMonthlySummary()" style="background:none;border:none;font-size:20px;cursor:pointer;color:#64748b">✕</button>
+  </div>
+  <div id="summaryContent"></div>
 </div>
 </body>
 </html>
