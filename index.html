@@ -1208,37 +1208,45 @@ function showMonthlySummary(){
       var wrap=document.createElement('div');
       wrap.style.cssText='margin-bottom:18px;';
 
+      // Header με collapse toggle
+      var isOpen=false;
       var hdr=document.createElement('div');
-      hdr.style.cssText='display:flex;align-items:center;gap:8px;margin-bottom:8px;padding-bottom:6px;border-bottom:1px solid #e2e8f0';
-      var av=document.createElement('div');
+      hdr.style.cssText='display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:10px;background:#f8fafc;border:1px solid #e2e8f0;cursor:pointer;user-select:none';
       var col=COLORS[si%COLORS.length];
+      var av=document.createElement('div');
       av.style.cssText='width:28px;height:28px;border-radius:50%;background:'+col+';display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;color:#fff;flex-shrink:0';
       av.textContent=st.name.substring(0,2).toUpperCase();
       var name=document.createElement('div');
       name.style.cssText='font-size:13px;font-weight:700;color:#1e293b;flex:1';
       name.textContent=st.name;
       var cnt=document.createElement('div');
-      cnt.style.cssText='font-size:11px;color:#64748b;background:#f1f5f9;padding:2px 8px;border-radius:12px';
+      cnt.style.cssText='font-size:11px;color:#64748b;background:#e2e8f0;padding:2px 8px;border-radius:12px';
       cnt.textContent=myEvs.length+' εργασίες';
+      var arr=document.createElement('span');
+      arr.style.cssText='font-size:12px;color:#94a3b8;transition:transform .2s;display:inline-block';
+      arr.textContent='▼';
       var pBtn=document.createElement('button');
       pBtn.textContent='🖨';
       pBtn.title='Εκτύπωση';
-      pBtn.style.cssText='background:none;border:1px solid #e2e8f0;border-radius:6px;padding:2px 6px;cursor:pointer;font-size:13px';
+      pBtn.style.cssText='background:none;border:1px solid #e2e8f0;border-radius:6px;padding:2px 6px;cursor:pointer;font-size:13px;flex-shrink:0';
       pBtn.addEventListener('click',(function(idx){return function(e){e.stopPropagation();printMemberReport(idx);};})(si));
-      hdr.appendChild(av);hdr.appendChild(name);hdr.appendChild(cnt);hdr.appendChild(pBtn);
-      wrap.appendChild(hdr);
+      hdr.appendChild(av);hdr.appendChild(name);hdr.appendChild(cnt);hdr.appendChild(arr);hdr.appendChild(pBtn);
+
+      // Λίστα εκδηλώσεων (κλειστή αρχικά)
+      var evList=document.createElement('div');
+      evList.style.cssText='overflow:hidden;max-height:0;transition:max-height .25s ease;padding:0 4px';
 
       if(myEvs.length===0){
         var nd=document.createElement('div');
-        nd.style.cssText='font-size:11px;color:#94a3b8;padding:4px 0';
+        nd.style.cssText='font-size:11px;color:#94a3b8;padding:6px 4px';
         nd.textContent='Δεν συμμετείχε σε εκδηλώσεις';
-        wrap.appendChild(nd);
+        evList.appendChild(nd);
       } else {
         myEvs.forEach(function(ev){
           var p=ev.date.split('-');
           var d=new Date(parseInt(p[0]),parseInt(p[1])-1,parseInt(p[2]));
           var row=document.createElement('div');
-          row.style.cssText='display:flex;align-items:center;gap:8px;padding:6px 8px;border-radius:8px;margin-bottom:4px;background:#f8fafc;cursor:pointer';
+          row.style.cssText='display:flex;align-items:center;gap:8px;padding:6px 8px;border-radius:8px;margin-top:4px;background:#fff;border:1px solid #f1f5f9;cursor:pointer';
           row.addEventListener('click',function(){closeMonthlySummary();setTimeout(function(){
             var ds=ev.date;var dayEvs=EVENTS.filter(function(e){return e.date===ds;});
             if(isPortrait()){
@@ -1260,9 +1268,22 @@ function showMonthlySummary(){
           role.textContent=ev.roles[si]||'';
           info.appendChild(t);info.appendChild(dt);
           row.appendChild(dot);row.appendChild(info);row.appendChild(role);
-          wrap.appendChild(row);
+          evList.appendChild(row);
         });
       }
+
+      // Toggle collapse
+      hdr.addEventListener('click',function(e){
+        if(e.target===pBtn||pBtn.contains(e.target)) return;
+        isOpen=!isOpen;
+        evList.style.maxHeight=isOpen?(evList.scrollHeight+20)+'px':'0';
+        arr.style.transform=isOpen?'rotate(180deg)':'rotate(0deg)';
+        hdr.style.background=isOpen?'#eff6ff':'#f8fafc';
+        hdr.style.borderColor=isOpen?'#93c5fd':'#e2e8f0';
+      });
+
+      wrap.appendChild(hdr);
+      wrap.appendChild(evList);
       content.appendChild(wrap);
     });
   } else {
