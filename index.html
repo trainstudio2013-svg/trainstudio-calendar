@@ -687,6 +687,9 @@ function buildVehicle(parent,ev){
   if(!ev.vehicles) ev.vehicles=[];
   var VEHICLES=['🟡 Κίτρινο','⚪ Ασήμι','🔵 Galaxy','Άλλο'];
 
+  // Non-admin: show only if at least one vehicle is selected
+  if(!isAdmin() && ev.vehicles.length===0) return;
+
   var wrap=document.createElement('div');
   wrap.style.cssText='margin-bottom:12px;';
 
@@ -701,29 +704,34 @@ function buildVehicle(parent,ev){
   VEHICLES.forEach(function(v){
     var isChecked=ev.vehicles.indexOf(v)!==-1;
 
+    // Non-admin: show only selected vehicles
+    if(!isAdmin() && !isChecked) return;
+
     var chip=document.createElement('div');
-    chip.style.cssText='display:flex;align-items:center;gap:6px;padding:6px 12px;border-radius:20px;border:1.5px solid '+(isChecked?'#2563eb':'#e2e8f0')+';background:'+(isChecked?'#eff6ff':'#f8fafc')+';cursor:pointer;font-size:12px;font-weight:'+(isChecked?'600':'400')+';color:'+(isChecked?'#2563eb':'#475569')+';transition:all .15s;user-select:none;';
+    chip.style.cssText='display:flex;align-items:center;gap:6px;padding:6px 12px;border-radius:20px;border:1.5px solid '+(isChecked?'#2563eb':'#e2e8f0')+';background:'+(isChecked?'#eff6ff':'#f8fafc')+';'+(isAdmin()?'cursor:pointer;':'cursor:default;')+'font-size:12px;font-weight:'+(isChecked?'600':'400')+';color:'+(isChecked?'#2563eb':'#475569')+';transition:all .15s;user-select:none;';
 
     var dot=document.createElement('div');
     dot.style.cssText='width:10px;height:10px;border-radius:50%;border:2px solid '+(isChecked?'#2563eb':'#cbd5e1')+';background:'+(isChecked?'#2563eb':'transparent')+';flex-shrink:0;transition:all .15s;';
     chip.appendChild(dot);
     chip.appendChild(document.createTextNode(v));
 
-    chip.addEventListener('click',(function(vehicle,chipEl,dotEl){
-      return function(){
-        var idx=ev.vehicles.indexOf(vehicle);
-        if(idx===-1){
-          ev.vehicles.push(vehicle);
-          chipEl.style.cssText='display:flex;align-items:center;gap:6px;padding:6px 12px;border-radius:20px;border:1.5px solid #2563eb;background:#eff6ff;cursor:pointer;font-size:12px;font-weight:600;color:#2563eb;transition:all .15s;user-select:none;';
-          dotEl.style.cssText='width:10px;height:10px;border-radius:50%;border:2px solid #2563eb;background:#2563eb;flex-shrink:0;transition:all .15s;';
-        } else {
-          ev.vehicles.splice(idx,1);
-          chipEl.style.cssText='display:flex;align-items:center;gap:6px;padding:6px 12px;border-radius:20px;border:1.5px solid #e2e8f0;background:#f8fafc;cursor:pointer;font-size:12px;font-weight:400;color:#475569;transition:all .15s;user-select:none;';
-          dotEl.style.cssText='width:10px;height:10px;border-radius:50%;border:2px solid #cbd5e1;background:transparent;flex-shrink:0;transition:all .15s;';
-        }
-        saveEv(ev);
-      };
-    })(v,chip,dot));
+    if(isAdmin()){
+      chip.addEventListener('click',(function(vehicle,chipEl,dotEl){
+        return function(){
+          var idx=ev.vehicles.indexOf(vehicle);
+          if(idx===-1){
+            ev.vehicles.push(vehicle);
+            chipEl.style.cssText='display:flex;align-items:center;gap:6px;padding:6px 12px;border-radius:20px;border:1.5px solid #2563eb;background:#eff6ff;cursor:pointer;font-size:12px;font-weight:600;color:#2563eb;transition:all .15s;user-select:none;';
+            dotEl.style.cssText='width:10px;height:10px;border-radius:50%;border:2px solid #2563eb;background:#2563eb;flex-shrink:0;transition:all .15s;';
+          } else {
+            ev.vehicles.splice(idx,1);
+            chipEl.style.cssText='display:flex;align-items:center;gap:6px;padding:6px 12px;border-radius:20px;border:1.5px solid #e2e8f0;background:#f8fafc;cursor:pointer;font-size:12px;font-weight:400;color:#475569;transition:all .15s;user-select:none;';
+            dotEl.style.cssText='width:10px;height:10px;border-radius:50%;border:2px solid #cbd5e1;background:transparent;flex-shrink:0;transition:all .15s;';
+          }
+          saveEv(ev);
+        };
+      })(v,chip,dot));
+    }
 
     checksWrap.appendChild(chip);
   });
