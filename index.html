@@ -353,10 +353,10 @@ var curY=TODAY.getFullYear(),curM=TODAY.getMonth(),selDay=null,curUser=0,sideOpe
 
 function isAdmin(){return STAFF[curUser].admin;}
 function isPortrait(){
-  // Mobile portrait ή tablet (touch device χωρίς side panel)
+  // Mobile portrait ή οποιαδήποτε touch συσκευή (tablet portrait/landscape)
   var isTouch='ontouchstart' in window||navigator.maxTouchPoints>0;
-  var sideHidden=window.innerWidth<=1100&&isTouch;
-  return window.innerWidth<=600&&window.innerHeight>window.innerWidth||sideHidden;
+  if(isTouch&&window.innerWidth<=1366) return true;
+  return window.innerWidth<=600&&window.innerHeight>window.innerWidth;
 }
 
 function rgba(hex,a){
@@ -1045,7 +1045,8 @@ function buildStaffRow(parent,ev,sti){
       setRole(evRef,stiRef,selRef.value);
       rowRef.className='staff-row'+(evRef.assigned.indexOf(stiRef)!==-1?' active':'');
       selRef.className='role-sel'+(selRef.value!=='—'?' hr':'');
-      renderSide(selDay);
+      // Μόνο αποθήκευση — χωρίς re-render που κλείνει τον καταρράκτη
+      renderCal(); // ανανέωση dots στο ημερολόγιο μόνο
     };
   })(ev,sti,row,sel));
   row.appendChild(sel);
@@ -1726,7 +1727,10 @@ document.getElementById('drawerHandle').addEventListener('click',function(){
 
 /* ORIENTATION FIX */
 window.addEventListener('orientationchange',function(){
-  setTimeout(function(){fixLayoutHeight();renderCal();if(selDay)renderSide(selDay);},300);
+  // Κλείσιμο drawer κατά την αλλαγή orientation
+  document.getElementById('drawer').classList.remove('open');
+  document.getElementById('drawerOverlay').classList.remove('open');
+  setTimeout(function(){fixLayoutHeight();renderCal();},300);
 });
 window.addEventListener('resize',function(){fixLayoutHeight();renderCal();});
 document.addEventListener('DOMContentLoaded',function(){
