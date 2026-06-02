@@ -1550,66 +1550,93 @@ function renderMobileList(){
     return;
   }
 
+  // Ομαδοποίηση ανά ημερομηνία
+  var groups={};
+  var groupOrder=[];
   evs.forEach(function(ev){
-    var parts=ev.date.split('-');
+    if(!groups[ev.date]){groups[ev.date]=[];groupOrder.push(ev.date);}
+    groups[ev.date].push(ev);
+  });
+
+  groupOrder.forEach(function(dateKey){
+    var groupEvs=groups[dateKey];
+    var parts=dateKey.split('-');
     var d=new Date(parseInt(parts[0]),parseInt(parts[1])-1,parseInt(parts[2]));
     var dayName=DAYS_GR[d.getDay()];
     var dateStr=parseInt(parts[2])+' '+MONTHS_GR[parseInt(parts[1])-1];
+    var isToday=dateKey===todayStr;
 
-    var item=document.createElement('div');
-    item.className='mobile-ev-item';
+    // Wrapper για την ομάδα
+    var group=document.createElement('div');
+    var borderColor=isToday?'#2563eb':(groupEvs.length>1?'#94a3b8':'#e2e8f0');
+    var borderWidth=groupEvs.length>1?'2px':'1.5px';
+    group.style.cssText='background:#fff;border-radius:12px;border:'+borderWidth+' solid '+borderColor+';overflow:hidden;flex-shrink:0;box-shadow:0 1px 4px rgba(0,0,0,.06)';
 
-    var dot=document.createElement('div');
-    dot.className='mobile-ev-dot';
-    dot.style.background=catColors[ev.cat]||catColors.other;
+    // Header ημερομηνίας (μόνο αν υπάρχουν >1 εκδηλώσεις ή πάντα για ομοιομορφία)
+    var hdr=document.createElement('div');
+    hdr.style.cssText='padding:6px 12px;background:'+(isToday?'#eff6ff':(groupEvs.length>1?'#f8fafc':'#fff'))+';border-bottom:'+(groupEvs.length>1?'1px solid #e2e8f0':'none')+';display:flex;align-items:center;gap:6px';
+    var dayLbl=document.createElement('span');
+    dayLbl.style.cssText='font-size:12px;font-weight:700;color:'+(isToday?'#2563eb':'#475569');
+    dayLbl.textContent=dayName+' '+dateStr;
+    var cntLbl=document.createElement('span');
+    cntLbl.style.cssText='font-size:10px;color:#94a3b8;margin-left:auto';
+    if(groupEvs.length>1) cntLbl.textContent=groupEvs.length+' εκδηλώσεις';
+    hdr.appendChild(dayLbl);
+    hdr.appendChild(cntLbl);
+    group.appendChild(hdr);
 
-    var info=document.createElement('div');
-    info.className='mobile-ev-info';
+    groupEvs.forEach(function(ev,idx){
+      var item=document.createElement('div');
+      item.style.cssText='display:flex;align-items:center;gap:10px;padding:9px 12px;cursor:pointer;'+(idx<groupEvs.length-1?'border-bottom:1px solid #f1f5f9;':'');
 
-    var title=document.createElement('div');
-    title.className='mobile-ev-title';
-    title.textContent=ev.title;
+      var dot=document.createElement('div');
+      dot.className='mobile-ev-dot';
+      dot.style.background=catColors[ev.cat]||catColors.other;
 
-    var date=document.createElement('div');
-    date.className='mobile-ev-date';
-    date.textContent=dayName+' '+dateStr;
+      var info=document.createElement('div');
+      info.className='mobile-ev-info';
 
-    info.appendChild(title);
-    info.appendChild(date);
+      var title=document.createElement('div');
+      title.className='mobile-ev-title';
+      title.textContent=ev.title;
 
-    var time=document.createElement('div');
-    time.className='mobile-ev-time';
-    time.textContent=ev.time||'';
+      info.appendChild(title);
 
-    item.appendChild(dot);
-    item.appendChild(info);
-    item.appendChild(time);
+      var time=document.createElement('div');
+      time.className='mobile-ev-time';
+      time.textContent=ev.time||'';
 
-    // Άνοιγμα drawer με λεπτομέρειες
-    item.addEventListener('click',(function(evRef){
-      return function(){
-        var ds=evRef.date;
-        var dayEvs=EVENTS.filter(function(e){return e.date===ds;});
-        var drawerBody=document.getElementById('drawerBody');
-        drawerBody.innerHTML='';
-        buildPanel(drawerBody,dayEvs,ds);
-        document.getElementById('drawer').classList.add('open');
-        document.getElementById('drawerOverlay').classList.add('open');
-        // Scroll στη σωστή εκδήλωση
-        setTimeout(function(){
-          var cards=drawerBody.querySelectorAll('.ev-card');
-          cards.forEach(function(card){
-            if(card.dataset.evid===String(evRef.id)){
-              card.scrollIntoView({behavior:'smooth',block:'start'});
-              card.style.outline='2px solid #2563eb';
-            }
-          });
-        },100);
-      };
-    })(ev));
+      item.appendChild(dot);
+      item.appendChild(info);
+      item.appendChild(time);
 
-    el.appendChild(item);
+      item.addEventListener('click',(function(evRef){
+        return function(){
+          var ds=evRef.date;
+          var dayEvs=EVENTS.filter(function(e){return e.date===ds;});
+          var drawerBody=document.getElementById('drawerBody');
+          drawerBody.innerHTML='';
+          buildPanel(drawerBody,dayEvs,ds);
+          document.getElementById('drawer').classList.add('open');
+          document.getElementById('drawerOverlay').classList.add('open');
+          setTimeout(function(){
+            var cards=drawerBody.querySelectorAll('.ev-card');
+            cards.forEach(function(card){
+              if(card.dataset.evid===String(evRef.id)){
+                card.scrollIntoView({behavior:'smooth',block:'start'});
+                card.style.outline='2px solid #2563eb';
+              }
+            });
+          },100);
+        };
+      })(ev));
+
+      group.appendChild(item);
+    });
+
+    el.appendChild(group);
   });
+
 }
 
 function checkToday(){
