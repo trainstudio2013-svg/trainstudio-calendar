@@ -157,6 +157,10 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);hei
   .btn-ics{font-size:10px;padding:3px 6px}
   .staff-list{gap:4px}
   .drawer-body{padding:4px 12px 60px}
+  .legend{display:none}
+  .cal-nav{flex-direction:column;align-items:flex-start;gap:4px}
+  .nav-btns{width:100%;justify-content:space-between}
+  .cal-month{font-size:18px}
 }
 @media(orientation:landscape) and (max-height:500px){
   .topbar{height:44px;padding:0 10px}
@@ -408,7 +412,12 @@ function buildPanel(container,evs,ds){
       var tmRow=document.createElement('div');
       tmRow.style.cssText='display:flex;align-items:center;gap:8px;margin-bottom:6px;flex-wrap:wrap;';
       var dateParts2=evRef.date.split('-');
-      var greekDate2=dateParts2[2]+'/'+dateParts2[1]+'/'+dateParts2[0];
+      var DAYS_GR=['Κυριακή','Δευτέρα','Τρίτη','Τετάρτη','Πέμπτη','Παρασκευή','Σάββατο'];
+      var MONTHS_GR=['Ιανουαρίου','Φεβρουαρίου','Μαρτίου','Απριλίου','Μαΐου','Ιουνίου','Ιουλίου','Αυγούστου','Σεπτεμβρίου','Οκτωβρίου','Νοεμβρίου','Δεκεμβρίου'];
+      var evDateObj=new Date(parseInt(dateParts2[0]),parseInt(dateParts2[1])-1,parseInt(dateParts2[2]));
+      var dayName=DAYS_GR[evDateObj.getDay()];
+      var monthName=MONTHS_GR[parseInt(dateParts2[1])-1];
+      var greekDate2=parseInt(dateParts2[2])+' '+monthName+' '+dateParts2[0]+', '+dayName;
       tmRow.innerHTML='<span style="font-size:12px;color:var(--accent);font-weight:700;font-family:\'DM Mono\',monospace;">📅 '+greekDate2+'</span>'
         +'<span style="font-size:12px;color:var(--text2);font-weight:500">⏱ '+(evRef.time||'—')+'</span>';
 
