@@ -319,11 +319,26 @@ function sbFetch(path,method,body,prefer){
     h['Prefer']=prefer;
   } else if(method==='POST'){
     h['Prefer']='resolution=ignore-duplicates,return=minimal';
-  } else if(method==='PATCH'){
+  } else if(method==='PATCH'||method==='DELETE'){
     h['Prefer']='return=minimal';
   }
   return fetch(SB_URL+'/rest/v1/'+path,{method:method||'GET',headers:h,body:body?JSON.stringify(body):undefined});
 }
+function deleteEv(ev){
+  if(!confirm('Διαγραφή εκδήλωσης "'+ev.title+'";
+Αυτή η ενέργεια δεν αναιρείται.')) return;
+  sbFetch('events?id=eq.'+encodeURIComponent(ev.id),'DELETE');
+  EVENTS=EVENTS.filter(function(e){return e.id!==ev.id;});
+  renderCal();
+  // Κλείσιμο drawer/side
+  if(isPortrait()){
+    document.getElementById('drawer').classList.remove('open');
+    document.getElementById('drawerOverlay').classList.remove('open');
+  } else {
+    showEmpty();
+  }
+}
+
 function saveEv(ev){
   sbFetch('events?id=eq.'+encodeURIComponent(ev.id),'PATCH',{
     assigned:ev.assigned,
@@ -591,6 +606,17 @@ function buildPanel(container,evs,ds){
 
     /* NOTES - all */
     buildNotes(card,ev);
+
+    /* DELETE - admin only */
+    if(isAdmin()){
+      var delBtn=document.createElement('button');
+      delBtn.textContent='🗑 Διαγραφή εκδήλωσης';
+      delBtn.style.cssText='width:100%;margin-top:14px;padding:9px;border-radius:8px;border:1.5px solid #fca5a5;background:#fff;color:#dc2626;font-size:12px;font-family:"DM Sans",sans-serif;font-weight:600;cursor:pointer;transition:all .15s;';
+      delBtn.addEventListener('mouseenter',function(){delBtn.style.background='#fee2e2';});
+      delBtn.addEventListener('mouseleave',function(){delBtn.style.background='#fff';});
+      delBtn.addEventListener('click',(function(evRef){return function(){deleteEv(evRef);};})(ev));
+      card.appendChild(delBtn);
+    }
 
     container.appendChild(card);
   }
