@@ -151,6 +151,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);hei
 }
 /* MOBILE EVENT LIST */
 .mobile-ev-list{display:none}
+.mobile-ev-list.visible{display:flex;flex-direction:column;gap:6px;overflow-y:auto;flex:1;padding:6px 2px 8px 2px;-webkit-overflow-scrolling:touch}
 @media(max-width:600px) and (orientation:portrait){
   .mobile-ev-list{display:flex;flex-direction:column;gap:6px;overflow-y:auto;flex:1;padding:6px 2px 8px 2px;margin-top:6px;-webkit-overflow-scrolling:touch}
   .mobile-ev-item{display:flex;align-items:center;gap:10px;background:#fff;border-radius:10px;padding:9px 12px;box-shadow:0 1px 4px rgba(0,0,0,.07);cursor:pointer;border:1.5px solid #e2e8f0;flex-shrink:0}
@@ -199,7 +200,13 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);hei
   .legend{display:none!important}
   .layout-body{flex-direction:column}
   .cal-wrap{padding:0 8px 8px 8px;overflow:hidden;display:flex;flex-direction:column}
-  .mobile-ev-list{display:flex!important;flex:1;overflow-y:auto;gap:6px;flex-direction:column;padding:4px 0 8px 0;-webkit-overflow-scrolling:touch}
+  .mobile-ev-list{display:flex!important;flex:1;overflow-y:auto;gap:6px;flex-direction:column;padding:4px 8px 8px 8px;-webkit-overflow-scrolling:touch}
+  .mobile-ev-item{display:flex!important;align-items:center;gap:10px;background:#fff;border-radius:10px;padding:9px 12px;box-shadow:0 1px 4px rgba(0,0,0,.07);cursor:pointer;border:1.5px solid #e2e8f0;flex-shrink:0}
+  .mobile-ev-dot{width:12px;height:12px;border-radius:50%;flex-shrink:0;display:block!important}
+  .mobile-ev-info{flex:1;min-width:0;display:block!important}
+  .mobile-ev-title{font-size:13px;font-weight:600;color:#1e293b;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;display:block!important}
+  .mobile-ev-date{font-size:11px;color:#64748b;margin-top:1px;display:block!important}
+  .mobile-ev-time{font-size:11px;color:#94a3b8;flex-shrink:0;display:block!important}
   .mobile-ev-item{flex-shrink:0}
   .topbar{height:44px;padding:0 10px}
   .layout{height:calc(100vh - 44px);flex-direction:column}
