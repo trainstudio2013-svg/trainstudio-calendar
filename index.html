@@ -1222,12 +1222,34 @@ document.getElementById('drawerHandle').addEventListener('click',function(){
   document.getElementById('drawerOverlay').classList.remove('open');
 });
 
-/* SWIPE */
-var txS=0;
-document.addEventListener('touchstart',function(e){txS=e.touches[0].clientX;},{passive:true});
+/* ORIENTATION FIX */
+window.addEventListener('orientationchange',function(){
+  setTimeout(function(){renderCal();if(selDay)renderSide(selDay);},300);
+});
+window.addEventListener('resize',function(){renderCal();});
+
+/* SWIPE — horizontal for month nav, vertical for drawer close */
+var txS=0,tyS=0;
+document.addEventListener('touchstart',function(e){
+  txS=e.touches[0].clientX;
+  tyS=e.touches[0].clientY;
+},{passive:true});
 document.addEventListener('touchend',function(e){
   var dx=e.changedTouches[0].clientX-txS;
-  if(Math.abs(dx)>50&&!sideOpen){if(dx<0)nextM();else prevM();}
+  var dy=e.changedTouches[0].clientY-tyS;
+  // Swipe down on open drawer → close it
+  if(dy>60&&Math.abs(dy)>Math.abs(dx)){
+    var drawer=document.getElementById('drawer');
+    if(drawer.classList.contains('open')){
+      drawer.classList.remove('open');
+      document.getElementById('drawerOverlay').classList.remove('open');
+      return;
+    }
+  }
+  // Horizontal swipe → change month (only when drawer closed)
+  if(Math.abs(dx)>50&&Math.abs(dx)>Math.abs(dy)&&!sideOpen){
+    if(dx<0)nextM();else prevM();
+  }
 },{passive:true});
 
 var EVENTS=[];
@@ -1333,6 +1355,8 @@ async function doLogin(){
         renderCal();
         checkToday();
         loadSB();
+        // Portrait fix: force re-render after DOM settles
+        setTimeout(function(){renderCal();},100);
       }
     } else {
       document.getElementById('loginError').style.display='block';
