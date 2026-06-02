@@ -1383,9 +1383,17 @@ document.getElementById('drawerHandle').addEventListener('click',function(){
 
 /* ORIENTATION FIX */
 window.addEventListener('orientationchange',function(){
-  setTimeout(function(){renderCal();if(selDay)renderSide(selDay);},300);
+  setTimeout(function(){fixLayoutHeight();renderCal();if(selDay)renderSide(selDay);},300);
 });
-window.addEventListener('resize',function(){renderCal();});
+window.addEventListener('resize',function(){fixLayoutHeight();renderCal();});
+
+function fixLayoutHeight(){
+  var tb=document.querySelector('.topbar');
+  var layout=document.querySelector('.layout');
+  if(!tb||!layout) return;
+  var tbH=tb.getBoundingClientRect().height;
+  layout.style.height=(window.innerHeight - tbH)+'px';
+}
 
 /* SWIPE — horizontal for month nav, vertical for drawer close */
 var txS=0,tyS=0;
@@ -1515,8 +1523,9 @@ async function doLogin(){
         renderCal();
         checkToday();
         loadSB();
-        // Portrait fix: force re-render after DOM settles
-        setTimeout(function(){renderCal();},100);
+        // Portrait fix: measure real topbar height and re-render
+        setTimeout(function(){fixLayoutHeight();renderCal();},50);
+        setTimeout(function(){fixLayoutHeight();renderCal();},300);
       }
     } else {
       document.getElementById('loginError').style.display='block';
