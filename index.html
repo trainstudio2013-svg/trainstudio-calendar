@@ -112,10 +112,10 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);hei
 .staff-col{overflow:hidden;max-height:0;transition:max-height .3s,opacity .2s;opacity:0}
 .staff-col.open{max-height:800px;opacity:1}
 .staff-list{display:flex;flex-direction:column;gap:3px;padding-top:6px}
-.staff-row{display:flex;align-items:center;gap:7px;background:#fff;border:1px solid var(--border);border-radius:7px;padding:6px 9px}
+.staff-row{display:flex;align-items:center;gap:7px;background:#fff;border:1px solid var(--border);border-radius:7px;padding:6px 9px;flex-wrap:wrap}
 .staff-row.active{border-color:#93c5fd;background:#eff6ff}
 .av{width:26px;height:26px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:700;flex-shrink:0}
-.sname{font-size:11px;color:var(--text);flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-weight:500}
+.sname{font-size:11px;color:var(--text);flex:1;min-width:80px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-weight:500}
 .role-sel{background:#fff;border:1px solid var(--border2);color:var(--text2);font-family:'DM Sans',sans-serif;font-size:10px;padding:3px 5px;border-radius:5px;cursor:pointer;outline:none;max-width:96px}
 .role-sel.hr{border-color:#93c5fd;color:var(--accent);background:#eff6ff;font-weight:500}
 /* DRAWER */
@@ -141,10 +141,22 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);hei
 @media(max-width:600px){
   .pill{display:none}
   .cell{min-height:54px;height:auto}
+  .topbar{padding:0 10px;gap:5px}
+  .logo span:last-child{display:none}
+  .ics-btn{display:none}
+  .user-sel{font-size:11px;padding:4px 6px;max-width:110px}
+  .topbar-right{gap:5px}
+  #topbarExtra button{font-size:10px;padding:4px 7px}
 }
 @media(max-width:600px) and (orientation:portrait){
   .side,.side-toggle{display:none!important}
   .cal-wrap{height:100%;padding:12px}
+  .staff-row{gap:5px;padding:6px 8px}
+  .role-sel{max-width:80px;font-size:9px}
+  .btn-mail{font-size:10px;padding:3px 6px}
+  .btn-ics{font-size:10px;padding:3px 6px}
+  .staff-list{gap:4px}
+  .drawer-body{padding:4px 12px 60px}
 }
 @media(orientation:landscape) and (max-height:500px){
   .topbar{height:44px;padding:0 10px}
@@ -520,18 +532,25 @@ function buildPanel(container,evs,ds){
     var div=document.createElement('hr');div.className='divider';card.appendChild(div);
 
     /* ASSIGNED MEMBERS */
-    if(ev.assigned.length>0){
-      var lbl=document.createElement('div');lbl.className='sec-lbl';lbl.textContent='Ομάδα';card.appendChild(lbl);
-      for(var ai=0;ai<ev.assigned.length;ai++){
-        buildMemberRow(card,ev,ev.assigned[ai]);
-      }
-      /* MY RESPONSE */
-      if(ev.assigned.indexOf(curUser)!==-1){
-        buildMyResp(card,ev);
+    if(isAdmin()){
+      if(ev.assigned.length>0){
+        var lbl=document.createElement('div');lbl.className='sec-lbl';lbl.textContent='Ομάδα';card.appendChild(lbl);
+        for(var ai=0;ai<ev.assigned.length;ai++){
+          buildMemberRow(card,ev,ev.assigned[ai]);
+        }
+      } else {
+        var nd=document.createElement('div');nd.style.cssText='font-size:11px;color:var(--text3);margin-bottom:10px';
+        nd.textContent='Δεν έχει ανατεθεί ομάδα';card.appendChild(nd);
       }
     } else {
-      var nd=document.createElement('div');nd.style.cssText='font-size:11px;color:var(--text3);margin-bottom:10px';
-      nd.textContent='Δεν έχει ανατεθεί ομάδα';card.appendChild(nd);
+      /* Non-admin: show only own role */
+      var myRole=ev.roles[curUser]||'—';
+      if(myRole!=='—'){
+        var roleLbl=document.createElement('div');roleLbl.className='sec-lbl';roleLbl.textContent='Ρόλος σου';card.appendChild(roleLbl);
+        var roleTag=document.createElement('span');roleTag.className='rtag r-'+roleKey(myRole);roleTag.textContent=myRole;
+        var roleWrap=document.createElement('div');roleWrap.style.cssText='margin-bottom:10px;';
+        roleWrap.appendChild(roleTag);card.appendChild(roleWrap);
+      }
     }
 
     /* ASSIGNMENT COLLAPSE (admin) */
@@ -569,13 +588,15 @@ function buildMemberRow(parent,ev,si){
   if(r!=='—'){var rt=document.createElement('span');rt.className='rtag r-'+roleKey(r);rt.textContent=r;left.appendChild(rt);}
   row.appendChild(left);
   var btns=document.createElement('div');btns.className='member-btns';
-  /* ICS button */
-  var bics=document.createElement('button');bics.className='btn-ics';bics.textContent='📅 .ics';
-  bics.addEventListener('click',makeDownload(ev,si));btns.appendChild(bics);
-  /* Mail button */
-  var bmail=document.createElement('button');bmail.className='btn-mail'+(s.email?'':' nomail');bmail.textContent=s.email?'✉ Mail':'no email';
-  if(s.email) bmail.addEventListener('click',(function(evRef,siRef){return function(e){e.stopPropagation();sendAssignmentEmail(evRef,siRef);};})(ev,si));
-  btns.appendChild(bmail);
+  if(isAdmin()){
+    /* ICS button */
+    var bics=document.createElement('button');bics.className='btn-ics';bics.textContent='📅 .ics';
+    bics.addEventListener('click',makeDownload(ev,si));btns.appendChild(bics);
+    /* Mail button */
+    var bmail=document.createElement('button');bmail.className='btn-mail'+(s.email?'':' nomail');bmail.textContent=s.email?'✉ Mail':'no email';
+    if(s.email) bmail.addEventListener('click',(function(evRef,siRef){return function(e){e.stopPropagation();sendAssignmentEmail(evRef,siRef);};})(ev,si));
+    btns.appendChild(bmail);
+  }
   row.appendChild(btns);
   parent.appendChild(row);
 }
@@ -1319,6 +1340,8 @@ async function doLogin(){
 
 function updateTopbarUser(){
   document.getElementById('usel').value = curUser;
+  // Hide user selector for non-admin — they can't switch to another user
+  document.getElementById('usel').style.display = isAdmin() ? '' : 'none';
   // Show logout + change password buttons
   var topR = document.getElementById('topbarExtra');
   if(topR) topR.style.display='flex';
