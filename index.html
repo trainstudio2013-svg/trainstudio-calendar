@@ -677,11 +677,14 @@ function buildAddEvent(container, dateStr){
     saveBtn.addEventListener('click',function(){
       var title=titleInp.value.trim();
       if(!title){titleInp.style.borderColor='#f87171';return;}
-      var newEv={id:Date.now(),title:title,date:dateStr,time:timeInp.value.trim(),cat:catSel.value,assigned:[],roles:{},responses:{},vehicles:[],status:'pending',phone:'',address:'',notes:''};
+      // ID: 12 χαρακτήρες για συμβατότητα με sync script
+      var rawId=Date.now().toString(36)+Math.random().toString(36).slice(2,6);
+      var evId=rawId.slice(0,12);
+      var newEv={id:evId,title:title,date:dateStr,time:timeInp.value.trim(),cat:catSel.value,assigned:[],roles:{},responses:{},vehicles:[],status:'pending',phone:'',address:'',notes:''};
       EVENTS.push(newEv);
       EVENTS.sort(function(a,b){return String(a.date).localeCompare(String(b.date));});
       // Save to Supabase
-      sbFetch('events','POST',[{id:String(newEv.id),title:newEv.title,date:newEv.date,time:newEv.time,cat:newEv.cat}]);
+      sbFetch('events','POST',[{id:newEv.id,title:newEv.title,date:newEv.date,time:newEv.time,cat:newEv.cat}]);
       renderCal();
       renderSide(selDay);
     });
