@@ -150,13 +150,16 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);hei
 }
 @media(max-width:600px) and (orientation:portrait){
   .side,.side-toggle{display:none!important}
-  .layout{height:calc(100vh - 52px);overflow:visible}
-  .cal-wrap{height:auto;min-height:calc(100vh - 52px);padding:10px 12px 80px 12px;overflow:visible;flex-direction:column}
-  .cal-nav{display:flex!important;flex-direction:row;align-items:center;justify-content:space-between;flex-wrap:nowrap;gap:4px;margin-bottom:8px;flex-shrink:0}
+  .layout{height:calc(100vh - 52px)}
+  .cal-wrap{height:100%;padding:10px 12px 12px 12px;overflow:hidden;display:flex;flex-direction:column}
+  .cal-nav{display:flex!important;flex-direction:row!important;align-items:center!important;justify-content:space-between!important;flex-wrap:nowrap!important;gap:4px;margin-bottom:6px;flex-shrink:0;width:100%}
+  .nav-btns{display:flex!important;gap:6px;align-items:center}
   .legend{display:none}
-  .nav-btns{display:flex;gap:6px;align-items:center}
   .cal-month{font-size:16px}
-  .cal-grid{flex:none;overflow:visible}
+  .cal-head{gap:3px;margin-bottom:4px}
+  .cal-grid{gap:3px;flex:1}
+  .cell{padding:4px;min-height:0}
+  .dnum{font-size:13px;margin-bottom:2px}
   .staff-row{gap:5px;padding:6px 8px}
   .role-sel{max-width:80px;font-size:9px}
   .btn-mail{font-size:10px;padding:3px 6px}
@@ -1289,7 +1292,7 @@ function loadSB(){
       };
     });
     renderCal();
-    if(selDay) renderSide(selDay);
+    // Μην ανοίγει drawer αυτόματα — μόνο αν ο χρήστης το είχε ανοίξει ο ίδιος
   }).catch(function(e){console.log('loadSB error:',e);});
 }
 (function(){
@@ -1365,6 +1368,7 @@ async function doLogin(){
       } else {
         document.getElementById('usel').value = matchedUser;
         document.getElementById('loginPage').style.display='none';
+        selDay = null; // Καθαρισμός — να μην ανοίξει drawer αυτόματα
         updateTopbarUser();
         renderCal();
         checkToday();
