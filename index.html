@@ -150,17 +150,19 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);hei
 }
 @media(max-width:600px) and (orientation:portrait){
   .side,.side-toggle{display:none!important}
-  .cal-wrap{height:100%;padding:12px}
+  .layout{height:calc(100vh - 52px);overflow:visible}
+  .cal-wrap{height:auto;min-height:calc(100vh - 52px);padding:10px 12px 80px 12px;overflow:visible;flex-direction:column}
+  .cal-nav{display:flex!important;flex-direction:row;align-items:center;justify-content:space-between;flex-wrap:nowrap;gap:4px;margin-bottom:8px;flex-shrink:0}
+  .legend{display:none}
+  .nav-btns{display:flex;gap:6px;align-items:center}
+  .cal-month{font-size:16px}
+  .cal-grid{flex:none;overflow:visible}
   .staff-row{gap:5px;padding:6px 8px}
   .role-sel{max-width:80px;font-size:9px}
   .btn-mail{font-size:10px;padding:3px 6px}
   .btn-ics{font-size:10px;padding:3px 6px}
   .staff-list{gap:4px}
   .drawer-body{padding:4px 12px 60px}
-  .legend{display:none}
-  .cal-nav{flex-direction:column;align-items:flex-start;gap:4px}
-  .nav-btns{width:100%;justify-content:space-between}
-  .cal-month{font-size:18px}
 }
 @media(orientation:landscape) and (max-height:500px){
   .topbar{height:44px;padding:0 10px}
