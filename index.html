@@ -189,6 +189,30 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);hei
   .staff-list{gap:4px}
   .drawer-body{padding:4px 12px 60px}
 }
+/* TABLET (iPad) — portrait και landscape */
+@media(min-width:601px) and (max-width:1100px){
+  .side,.side-toggle{display:none!important}
+  body{overflow:hidden;overscroll-behavior:none;height:100dvh}
+  .layout{overflow:hidden;height:calc(100dvh - 52px)!important;flex-direction:column}
+  .cal-wrap{height:auto;padding:10px 14px 4px 14px;overflow:hidden;display:flex;flex-direction:column;gap:0}
+  .cal-nav{display:flex!important;flex-wrap:nowrap!important;margin-bottom:8px;flex-shrink:0}
+  .legend{display:none!important}
+  .cal-head{gap:4px;margin-bottom:4px;flex-shrink:0}
+  .cal-grid{gap:4px;flex:none;display:grid;grid-template-columns:repeat(7,1fr)}
+  .cell{height:calc((100vw - 28px - 24px) / 7);max-height:calc((100vw - 28px - 24px) / 7);min-height:0!important;padding:4px;border-radius:10px;box-sizing:border-box}
+  .dnum{font-size:13px;margin-bottom:0;text-align:right}
+  .pill{font-size:9px;padding:1px 4px}
+  .mobile-ev-list{display:flex;flex-direction:column;gap:8px;overflow-y:auto;flex:1;padding:8px 14px 20px 14px;margin-top:8px;-webkit-overflow-scrolling:touch}
+  .mobile-ev-item{display:flex;align-items:center;gap:12px;background:#fff;border-radius:12px;padding:11px 14px;box-shadow:0 1px 4px rgba(0,0,0,.07);cursor:pointer;border:1.5px solid #e2e8f0;flex-shrink:0}
+  .mobile-ev-dot{width:12px;height:12px;border-radius:50%;flex-shrink:0}
+  .mobile-ev-info{flex:1;min-width:0}
+  .mobile-ev-title{font-size:14px;font-weight:600;color:#1e293b;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .mobile-ev-date{font-size:12px;color:#64748b;margin-top:2px}
+  .mobile-ev-time{font-size:12px;color:#94a3b8;flex-shrink:0}
+  .mobile-ev-empty{text-align:center;color:#94a3b8;font-size:14px;padding:30px 0}
+  .drawer-body{padding:8px 16px 60px}
+}
+
 @media(orientation:landscape) and (max-height:500px) and (max-width:900px){
   /* Κινητό σε landscape — κρύβουμε ημερολόγιο, δείχνουμε μόνο λίστα */
   .side,.side-toggle{display:none!important}
@@ -1489,8 +1513,8 @@ function doPrint(si,selMonths,MONTHS_FULL,MONTHS_GEN,DAYS_GR,win){
 function renderMobileList(){
   var el=document.getElementById('mobileEvList');
   if(!el) return;
-  // Εμφάνιση σε portrait ΚΑΙ landscape mobile
-  if(window.innerWidth>900) return;
+  // Εμφάνιση σε mobile ΚΑΙ tablet
+  if(window.innerWidth>1100) return;
   var TODAY_STR=curY+'-'+pad(curM+1)+'-01';
   var todayFull=new Date();
   var todayStr=todayFull.getFullYear()+'-'+pad(todayFull.getMonth()+1)+'-'+pad(todayFull.getDate());
