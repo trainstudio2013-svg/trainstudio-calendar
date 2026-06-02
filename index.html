@@ -38,7 +38,8 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);hei
 .leg-dot{width:8px;height:8px;border-radius:2px}
 .cal-head{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:7px;margin-bottom:6px;flex-shrink:0;min-width:0;overflow:hidden}
 .dn{font-size:14px;font-weight:600;color:var(--text2);text-align:center;padding:6px 0;font-family:'DM Mono',monospace}
-.cal-grid{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:7px;flex:1;min-width:0;overflow:hidden}
+.cal-grid{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:7px;flex:none;min-width:0;overflow:hidden}
+.mobile-ev-list.desktop-list{display:flex!important;flex-direction:column;gap:6px;overflow-y:auto;max-height:220px;padding:8px 0 4px 0;margin-top:8px;border-top:1px solid var(--border)}
 .cell{height:100%;background:#fff;border:1.5px solid var(--border);border-radius:9px;padding:10px;cursor:pointer;transition:border-color .15s;position:relative;box-shadow:0 1px 3px rgba(0,0,0,.06)}
 .cell:hover:not(.other){border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-light)}
 .cell.today{border-color:var(--accent);border-width:2px}
@@ -218,10 +219,10 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);hei
   .cal-nav{margin-bottom:3px!important}
   .cal-head{gap:2px;margin-bottom:2px}
   .cal-grid{gap:2px}
-  .cell{height:calc((100vh - 120px) / 6);max-height:calc((100vh - 120px) / 6);padding:3px}
+  .cell{height:calc((100vh - 180px) / 6);max-height:calc((100vh - 180px) / 6);padding:3px}
   .dnum{font-size:11px}
   .pill{font-size:8px;padding:1px 3px}
-  .mobile-ev-list{display:none!important}
+  .mobile-ev-list{display:flex!important;flex-direction:column;gap:6px;overflow-y:auto;flex:none;max-height:200px;padding:6px 8px 8px 8px;margin-top:4px;-webkit-overflow-scrolling:touch}
 }
 
 @media(orientation:landscape) and (max-height:500px) and (max-width:900px){
@@ -1530,8 +1531,13 @@ function doPrint(si,selMonths,MONTHS_FULL,MONTHS_GEN,DAYS_GR,win){
 function renderMobileList(){
   var el=document.getElementById('mobileEvList');
   if(!el) return;
-  // Εμφάνιση σε mobile ΚΑΙ tablet
-  if(window.innerWidth>1100) return;
+  // Desktop: προσθήκη class για διαφορετικό styling
+  var isDesktop=window.innerWidth>1100&&!('ontouchstart' in window);
+  if(isDesktop){
+    el.classList.add('desktop-list');
+  } else {
+    el.classList.remove('desktop-list');
+  }
   var TODAY_STR=curY+'-'+pad(curM+1)+'-01';
   var todayFull=new Date();
   var todayStr=todayFull.getFullYear()+'-'+pad(todayFull.getMonth()+1)+'-'+pad(todayFull.getDate());
