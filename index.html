@@ -162,12 +162,12 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);hei
   .mobile-ev-time{font-size:11px;color:#94a3b8;flex-shrink:0}
   .mobile-ev-empty{text-align:center;color:#94a3b8;font-size:13px;padding:20px 0}
   .side,.side-toggle{display:none!important}
-  .topbar{padding:6px 10px;flex-wrap:nowrap;height:auto!important}
+  .topbar{padding:0 10px;flex-wrap:nowrap;height:50px!important;min-height:50px;max-height:50px}
   .topbar-right{gap:5px}
-  #topbarExtra button{font-size:11px;padding:4px 8px}
+  #topbarExtra button{font-size:11px;padding:3px 7px}
   .logo img{width:28px;height:28px}
-  body{overflow:hidden;overscroll-behavior:none}
-  .layout{overflow:hidden;position:absolute;top:0;left:0;right:0;bottom:0}
+  body{overflow:hidden;overscroll-behavior:none;height:100dvh}
+  .layout{overflow:hidden;height:calc(100dvh - 50px)!important;max-height:calc(100dvh - 50px)!important}
   .cal-wrap{height:100%;padding:4px 6px 4px 6px;overflow:hidden;display:flex;flex-direction:column;gap:0;touch-action:pan-x}
   .cal-nav{display:flex!important;flex-direction:row!important;align-items:center!important;justify-content:space-between!important;flex-wrap:nowrap!important;gap:4px;margin-bottom:4px;flex-shrink:0;height:36px}
   .nav-btns{display:flex!important;gap:5px;align-items:center;flex-shrink:0}
@@ -1702,13 +1702,16 @@ document.addEventListener('DOMContentLoaded',function(){
 });
 
 function fixLayoutHeight(){
+  // Το CSS dvh χειρίζεται το layout — αυτό είναι fallback για παλιά iOS
+  if(window.innerWidth>600) return;
   var tb=document.querySelector('.topbar');
   var layout=document.querySelector('.layout');
   if(!tb||!layout) return;
-  if(window.innerWidth>600) return; // Μόνο για mobile
   var tbH=tb.getBoundingClientRect().height;
-  layout.style.top=tbH+'px';
-  layout.style.height=(window.innerHeight - tbH)+'px';
+  if(tbH>0){
+    layout.style.height=(window.innerHeight - tbH)+'px';
+    layout.style.marginTop='0';
+  }
 }
 
 /* SWIPE — horizontal for month nav, vertical for drawer close */
