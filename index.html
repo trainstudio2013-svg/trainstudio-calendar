@@ -194,16 +194,15 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);hei
   .side,.side-toggle{display:none!important}
   body{overflow:hidden;overscroll-behavior:none;height:100dvh}
   .layout{overflow:hidden;height:calc(100dvh - 52px)!important;flex-direction:column}
-  .cal-wrap{height:auto;padding:10px 14px 4px 14px;overflow:hidden;display:flex;flex-direction:column;gap:0}
-  .cal-nav{display:flex!important;flex-wrap:nowrap!important;margin-bottom:8px;flex-shrink:0}
+  .cal-wrap{height:auto;padding:8px 8px 4px 8px;overflow:hidden;display:flex;flex-direction:column;gap:0;box-sizing:border-box;width:100%}
+  .cal-nav{display:flex!important;flex-wrap:nowrap!important;margin-bottom:6px;flex-shrink:0}
   .legend{display:none!important}
-  .cal-head{gap:4px;margin-bottom:4px;flex-shrink:0}
-  .cal-grid{gap:4px;flex:none;display:grid;grid-template-columns:repeat(7,1fr)}
-  .cell{height:calc((100vw - 28px - 24px) / 7);max-height:calc((100vw - 28px - 24px) / 7);min-height:0!important;padding:4px;border-radius:10px;box-sizing:border-box}
-  .dnum{font-size:13px;margin-bottom:0;text-align:right}
-  .pill{font-size:9px;padding:1px 4px}
-  .mobile-ev-list{display:flex;flex-direction:column;gap:8px;overflow-y:auto;flex:1;padding:8px 14px 20px 14px;margin-top:8px;-webkit-overflow-scrolling:touch}
-  .mobile-ev-item{display:flex;align-items:center;gap:12px;background:#fff;border-radius:12px;padding:11px 14px;box-shadow:0 1px 4px rgba(0,0,0,.07);cursor:pointer;border:1.5px solid #e2e8f0;flex-shrink:0}
+  .cal-head{gap:3px;margin-bottom:3px;flex-shrink:0;display:grid;grid-template-columns:repeat(7,minmax(0,1fr));width:100%;box-sizing:border-box}
+  .cal-grid{gap:3px;flex:none;display:grid;grid-template-columns:repeat(7,minmax(0,1fr));width:100%;box-sizing:border-box;overflow:hidden}
+  .cell{height:calc((100vw - 16px - 18px) / 7);max-height:calc((100vw - 16px - 18px) / 7);min-height:0!important;padding:4px;border-radius:8px;box-sizing:border-box;overflow:hidden;min-width:0}
+  .dnum{font-size:12px;margin-bottom:0;text-align:right}
+  .pill{font-size:9px;padding:1px 4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .mobile-ev-list{display:flex;flex-direction:column;gap:8px;overflow-y:auto;flex:1;padding:8px 8px 20px 8px;margin-top:6px;-webkit-overflow-scrolling:touch}
   .mobile-ev-dot{width:12px;height:12px;border-radius:50%;flex-shrink:0}
   .mobile-ev-info{flex:1;min-width:0}
   .mobile-ev-title{font-size:14px;font-weight:600;color:#1e293b;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
@@ -211,6 +210,18 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);hei
   .mobile-ev-time{font-size:12px;color:#94a3b8;flex-shrink:0}
   .mobile-ev-empty{text-align:center;color:#94a3b8;font-size:14px;padding:30px 0}
   .drawer-body{padding:8px 16px 60px}
+}
+
+/* Tablet landscape — μικρότερα κουτάκια για να χωράνε όλες οι σειρές */
+@media(min-width:601px) and (max-width:1366px) and (pointer:coarse) and (orientation:landscape){
+  .cal-wrap{padding:4px 8px 2px 8px}
+  .cal-nav{margin-bottom:3px!important}
+  .cal-head{gap:2px;margin-bottom:2px}
+  .cal-grid{gap:2px}
+  .cell{height:calc((100vh - 120px) / 6);max-height:calc((100vh - 120px) / 6);padding:3px}
+  .dnum{font-size:11px}
+  .pill{font-size:8px;padding:1px 3px}
+  .mobile-ev-list{display:none!important}
 }
 
 @media(orientation:landscape) and (max-height:500px) and (max-width:900px){
