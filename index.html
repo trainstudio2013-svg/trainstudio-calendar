@@ -2302,8 +2302,8 @@ var warehouseStock={};
 
 async function loadWarehouseStock(){
   try{
-    var r=await fetch(SUPABASE_URL+'/rest/v1/inventory?select=id,qty',{
-      headers:{'apikey':SUPABASE_KEY,'Authorization':'Bearer '+SUPABASE_KEY}
+    var r=await fetch(SB_URL+'/rest/v1/inventory?select=id,qty',{
+      headers:{'apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY}
     });
     var data=await r.json();
     if(Array.isArray(data)) data.forEach(function(row){warehouseStock[row.id]=row.qty;});
@@ -2315,8 +2315,8 @@ async function openPackingList(ev){
   // Φόρτωση υπάρχοντος packing list
   var existing={};
   try{
-    var r=await fetch(SUPABASE_URL+'/rest/v1/packing_lists?event_id=eq.'+encodeURIComponent(ev.id)+'&select=item_id,qty',{
-      headers:{'apikey':SUPABASE_KEY,'Authorization':'Bearer '+SUPABASE_KEY}
+    var r=await fetch(SB_URL+'/rest/v1/packing_lists?event_id=eq.'+encodeURIComponent(ev.id)+'&select=item_id,qty',{
+      headers:{'apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY}
     });
     var data=await r.json();
     if(Array.isArray(data)) data.forEach(function(row){existing[row.item_id]=row.qty;});
@@ -2425,14 +2425,14 @@ async function openPackingList(ev){
     });
     // Διαγραφή παλιών
     try{
-      await fetch(SUPABASE_URL+'/rest/v1/packing_lists?event_id=eq.'+encodeURIComponent(ev.id),{
+      await fetch(SB_URL+'/rest/v1/packing_lists?event_id=eq.'+encodeURIComponent(ev.id),{
         method:'DELETE',
-        headers:{'apikey':SUPABASE_KEY,'Authorization':'Bearer '+SUPABASE_KEY,'Prefer':'return=minimal'}
+        headers:{'apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY,'Prefer':'return=minimal'}
       });
       if(rows.length>0){
-        await fetch(SUPABASE_URL+'/rest/v1/packing_lists',{
+        await fetch(SB_URL+'/rest/v1/packing_lists',{
           method:'POST',
-          headers:{'apikey':SUPABASE_KEY,'Authorization':'Bearer '+SUPABASE_KEY,'Content-Type':'application/json','Prefer':'return=minimal'},
+          headers:{'apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY,'Content-Type':'application/json','Prefer':'return=minimal'},
           body:JSON.stringify(rows)
         });
       }
