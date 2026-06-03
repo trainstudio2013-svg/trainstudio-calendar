@@ -1,0 +1,422 @@
+<!DOCTYPE html>
+<html lang="el">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Train Studio — Αποθήκη</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=DM+Mono:wght@500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#f8fafc;--bg2:#f1f5f9;--bg3:#e2e8f0;
+  --text:#1e293b;--text2:#475569;--text3:#94a3b8;
+  --accent:#2563eb;--accent-light:#eff6ff;
+  --border:#e2e8f0;--border2:#cbd5e1;
+  --radius:12px;
+  --topbar-h:52px;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min-height:100vh}
+
+/* TOPBAR */
+.topbar{height:var(--topbar-h);background:#fff;border-bottom:1.5px solid var(--border);display:flex;align-items:center;padding:0 20px;gap:12px;position:sticky;top:0;z-index:100}
+.logo{display:flex;align-items:center;gap:10px;text-decoration:none}
+.logo img{width:34px;height:34px}
+.logo span{font-size:15px;font-weight:700;color:var(--text)}
+.topbar-right{margin-left:auto;display:flex;align-items:center;gap:8px}
+.btn-back{font-size:12px;padding:6px 12px;background:var(--bg2);border:1px solid var(--border);border-radius:8px;cursor:pointer;font-family:'DM Sans',sans-serif;color:var(--text2);font-weight:500;text-decoration:none}
+.btn-back:hover{background:var(--bg3)}
+
+/* LAYOUT */
+.layout{max-width:1200px;margin:0 auto;padding:24px 20px}
+
+/* CATEGORY TABS */
+.cat-tabs{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:24px}
+.cat-tab{padding:7px 14px;border-radius:20px;border:1.5px solid var(--border);background:#fff;font-size:12px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif;color:var(--text2);transition:all .15s}
+.cat-tab.active{background:var(--accent);border-color:var(--accent);color:#fff}
+.cat-tab:hover:not(.active){border-color:var(--accent);color:var(--accent)}
+
+/* SECTION */
+.section{display:none}
+.section.active{display:block}
+.section-title{font-size:14px;font-weight:700;color:var(--text);font-family:'DM Mono',monospace;text-transform:uppercase;letter-spacing:.08em;margin-bottom:16px;display:flex;align-items:center;gap:8px}
+
+/* EQUIPMENT GRID */
+.eq-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:10px;margin-bottom:24px}
+.eq-card{background:#fff;border:1.5px solid var(--border);border-radius:var(--radius);padding:14px 16px;display:flex;align-items:center;gap:12px;transition:border-color .15s}
+.eq-card:hover{border-color:var(--border2)}
+.eq-info{flex:1;min-width:0}
+.eq-name{font-size:13px;font-weight:600;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.eq-sub{font-size:11px;color:var(--text3);margin-top:2px}
+.eq-qty{display:flex;align-items:center;gap:6px;flex-shrink:0}
+.qty-btn{width:28px;height:28px;border-radius:8px;border:1.5px solid var(--border);background:var(--bg2);color:var(--text2);font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center;font-weight:700;transition:all .15s;line-height:1}
+.qty-btn:hover{border-color:var(--accent);color:var(--accent);background:var(--accent-light)}
+.qty-num{font-size:15px;font-weight:700;color:var(--text);min-width:28px;text-align:center;font-family:'DM Mono',monospace}
+.qty-num.zero{color:var(--text3)}
+.eq-status{width:10px;height:10px;border-radius:50%;flex-shrink:0}
+.eq-status.ok{background:#22c55e}
+.eq-status.zero{background:#e2e8f0}
+.eq-status.low{background:#f59e0b}
+
+/* ADD ITEM */
+.add-item-row{display:flex;gap:8px;margin-bottom:24px;flex-wrap:wrap}
+.add-item-row input{flex:1;min-width:180px;padding:8px 12px;border:1.5px solid var(--border);border-radius:8px;font-size:13px;font-family:'DM Sans',sans-serif;outline:none;color:var(--text)}
+.add-item-row input:focus{border-color:var(--accent)}
+.btn-add{padding:8px 16px;background:var(--accent);color:#fff;border:none;border-radius:8px;font-size:13px;font-family:'DM Sans',sans-serif;font-weight:600;cursor:pointer}
+.btn-add:hover{background:#1d4ed8}
+
+/* SUBSECTION */
+.subsection{margin-bottom:20px}
+.subsection-title{font-size:11px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.06em;font-family:'DM Mono',monospace;margin-bottom:10px;padding-bottom:6px;border-bottom:1px solid var(--border)}
+
+/* SAVE STATUS */
+.save-status{position:fixed;bottom:20px;right:20px;background:#1e293b;color:#fff;padding:10px 16px;border-radius:10px;font-size:12px;font-weight:600;opacity:0;transition:opacity .3s;pointer-events:none}
+.save-status.show{opacity:1}
+
+/* MOBILE */
+@media(max-width:600px){
+  .layout{padding:16px 12px}
+  .eq-grid{grid-template-columns:1fr}
+  .topbar{padding:0 12px}
+}
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <a href="index.html" class="logo">
+    <img src="https://trainstudio2013-svg.github.io/trainstudio-calendar/train-logo.png" onerror="this.style.display='none'">
+    <span>Train Studio</span>
+  </a>
+  <span style="font-size:13px;font-weight:700;color:var(--text2);font-family:'DM Mono',monospace">/ Αποθήκη</span>
+  <div class="topbar-right">
+    <a href="index.html" class="btn-back">← Ημερολόγιο</a>
+  </div>
+</div>
+
+<div class="layout">
+  <div class="cat-tabs" id="catTabs"></div>
+  <div id="sections"></div>
+</div>
+
+<div class="save-status" id="saveStatus">✅ Αποθηκεύτηκε</div>
+
+<script>
+const SUPABASE_URL='https://dhignagzgufqkhizgqrl.supabase.co';
+const SUPABASE_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRoaWduYWd6Z3VmcWtoaXpncXJsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzkyOTUzOTEsImV4cCI6MjA5NDg3MTM5MX0.j6oNTTiPZCFEhIqwkDLBfba7ouNkOEPPnHwk4WVI8Xg';
+
+// Κατηγορίες και εξοπλισμός
+const CATALOG = [
+  {
+    id:'sound', label:'🔊 Ήχος', items:[
+      {sub:'Console', items:[
+        {id:'behringer_wing',   name:'Behringer Wing',        qty:2},
+        {id:'midas_m32',        name:'Midas M32',             qty:1},
+        {id:'midas_m32r',       name:'Midas M32R',            qty:1},
+        {id:'xair_x18',         name:'XAir X18',              qty:1},
+        {id:'soundcraft_mfxi',  name:'Soundcraft MFXi 8/2',   qty:1},
+        {id:'yamaha_ag06',      name:'Yamaha AG06MK2',        qty:1},
+        {id:'behringer_xenyx',  name:'Behringer Xenyx802',    qty:1},
+      ]},
+      {sub:'Stagebox', items:[
+        {id:'midas_dl231',      name:'Midas DL231',           qty:1},
+        {id:'behringer_dl32_a', name:'Behringer DL32 (1)',    qty:1},
+        {id:'behringer_dl32_b', name:'Behringer DL32 (2)',    qty:1},
+      ]},
+      {sub:'Speakers', items:[
+        {id:'tw_t24n_60',       name:'TW Audio T24 60°',      qty:2},
+        {id:'tw_t24n_90',       name:'TW Audio T24 90°',      qty:2},
+        {id:'tw_b30',           name:'TW Audio B30',          qty:4},
+        {id:'tw_b21',           name:'TW Audio B21',          qty:2},
+        {id:'fbt_sub18',        name:'FBT SUB 18"',           qty:2},
+        {id:'fbt_mon15',        name:'FBT MON 15"',           qty:2},
+        {id:'fbt_mon12',        name:'FBT MON 12"',           qty:6},
+        {id:'turbosound12',     name:'Turbosound 12"',        qty:4},
+        {id:'ev_zlx15',         name:'EV ZLX 15"',            qty:2},
+        {id:'ev_zlx12',         name:'EV ZLX 12"',            qty:2},
+        {id:'bose_s1',          name:'Bose S1',               qty:6},
+        {id:'ev_1212',          name:'EV 1212',               qty:2},
+        {id:'jh212',            name:'JH212',                 qty:0},
+      ]},
+      {sub:'Amplifiers', items:[
+        {id:'ampl_k3',          name:'AMPL K3',               qty:3},
+        {id:'ampl_x4',          name:'AMPL X4',               qty:1},
+        {id:'lab_gruppen_3200', name:'LAB Gruppen 3200',      qty:2},
+      ]},
+    ]
+  },
+  {
+    id:'backline', label:'🎸 Backline', items:[
+      {sub:'Ενισχυτές', items:[
+        {id:'fender_amp',       name:'Ενισχυτής κιθάρας Fender', qty:0},
+        {id:'bugera_amp',       name:'Ενισχυτής κιθάρας Bugera', qty:0},
+        {id:'bassman_amp',      name:'Ενισχυτής μπάσου Bassman', qty:0},
+      ]},
+      {sub:'Keyboards', items:[
+        {id:'nord_piano5',      name:'Nord Piano 5',          qty:1},
+        {id:'korg_kronos',      name:'Korg Kronos',           qty:1},
+        {id:'yamaha_footswitch',name:'Yamaha Footswitch',     qty:1},
+      ]},
+      {sub:'Drums', items:[
+        {id:'drum_set',         name:'Σετ τύμπανων',          qty:0},
+      ]},
+      {sub:'IEM', items:[
+        {id:'p16',              name:'P16',                   qty:0},
+      ]},
+    ]
+  },
+  {
+    id:'cables', label:'🔌 Καλώδια', items:[
+      {sub:'XLR', items:[
+        {id:'xlr_1m',   name:'XLR 1m',    qty:0},
+        {id:'xlr_2m',   name:'XLR 2m',    qty:0},
+        {id:'xlr_3m',   name:'XLR 3m',    qty:0},
+        {id:'xlr_75m',  name:'XLR 7.5m',  qty:0},
+        {id:'xlr_10m',  name:'XLR 10m',   qty:0},
+        {id:'xlr_15m',  name:'XLR 15m',   qty:0},
+        {id:'xlr_20m',  name:'XLR 20m',   qty:0},
+      ]},
+      {sub:'Jack', items:[
+        {id:'jack_3m',  name:'Jack/Jack 3m',  qty:0},
+        {id:'jack_5m',  name:'Jack/Jack 5m',  qty:0},
+      ]},
+      {sub:'Άλλα', items:[
+        {id:'return',   name:'Επιστροφές',    qty:0},
+        {id:'speakon',  name:'Speakon',       qty:0},
+      ]},
+    ]
+  },
+  {
+    id:'power', label:'⚡ Παροχές', items:[
+      {sub:'16A', items:[
+        {id:'box_16a',    name:'16A Box',      qty:1},
+        {id:'cables_16a', name:'16A Cables',   qty:1},
+        {id:'poly_16a',   name:'Πολύπριζο 16A',qty:0},
+      ]},
+      {sub:'32A', items:[
+        {id:'box_32a',    name:'32A Box',      qty:0},
+        {id:'cables_32a', name:'32A Cables',   qty:0},
+        {id:'adapter_16_32', name:'Adapter 16A→32A', qty:0},
+        {id:'adapter_32_16', name:'Adapter 32A→16A', qty:0},
+      ]},
+      {sub:'63A', items:[
+        {id:'rack_63a',   name:'63A Rack',     qty:1},
+        {id:'box_62a',    name:'62A Box',      qty:1},
+        {id:'adapter_32_63', name:'Adapter 32A→63A', qty:1},
+        {id:'adapter_63_32', name:'Adapter 63A→32A', qty:1},
+      ]},
+      {sub:'125A', items:[
+        {id:'box_125a',   name:'125A Box',     qty:0},
+        {id:'cables_125a',name:'125A Cables',  qty:0},
+      ]},
+      {sub:'Γενική', items:[
+        {id:'polyprizoΓ', name:'Πολύπριζο',           qty:0},
+        {id:'extension',  name:'Προέκταση ρεύματος',  qty:0},
+      ]},
+    ]
+  },
+  {
+    id:'stands', label:'🎤 Stands', items:[
+      {sub:'Stands', items:[
+        {id:'speaker_stand',    name:'Speaker Stand',     qty:0},
+        {id:'mic_stand',        name:'Microphone Stand',  qty:0},
+        {id:'music_stand',      name:'Music Stand',       qty:0},
+        {id:'instrument_stand', name:'Instrument Stand',  qty:0},
+        {id:'laptop_stand',     name:'Laptop Stand',      qty:0},
+        {id:'stool',            name:'Stool',             qty:0},
+      ]},
+    ]
+  },
+  {
+    id:'lights', label:'💡 Φώτα', items:[
+      {sub:'Φώτα', items:[
+        {id:'light_mixer',  name:'Light Mixer',   qty:0},
+        {id:'light_box',    name:'Light Box',     qty:0},
+      ]},
+    ]
+  },
+  {
+    id:'av', label:'📹 AV', items:[
+      {sub:'Video', items:[
+        {id:'video_mixer',  name:'Video Mixer',   qty:0},
+        {id:'projector',    name:'Projector',     qty:0},
+        {id:'tv',           name:'TV',            qty:0},
+        {id:'converter',    name:'Converter',     qty:0},
+      ]},
+    ]
+  },
+  {
+    id:'truss', label:'🏗 Truss', items:[
+      {sub:'Truss', items:[
+        {id:'truss_tower',  name:'Πύργος',   qty:0},
+        {id:'truss_jinia',  name:'Τζίνια',   qty:0},
+      ]},
+    ]
+  },
+];
+
+// State
+let inventory = {}; // id -> qty (overrides from Supabase)
+let activeCat = CATALOG[0].id;
+
+// Load from Supabase
+async function loadInventory(){
+  try{
+    const r = await fetch(`${SUPABASE_URL}/rest/v1/inventory?select=*`, {
+      headers:{'apikey':SUPABASE_KEY,'Authorization':`Bearer ${SUPABASE_KEY}`}
+    });
+    const data = await r.json();
+    if(Array.isArray(data)){
+      data.forEach(row => { inventory[row.id] = row.qty; });
+    }
+  }catch(e){ console.log('Load error:', e); }
+  render();
+}
+
+async function saveItem(id, qty){
+  try{
+    await fetch(`${SUPABASE_URL}/rest/v1/inventory`, {
+      method:'POST',
+      headers:{
+        'apikey':SUPABASE_KEY,
+        'Authorization':`Bearer ${SUPABASE_KEY}`,
+        'Content-Type':'application/json',
+        'Prefer':'resolution=merge-duplicates,return=minimal'
+      },
+      body: JSON.stringify({id, qty})
+    });
+    showSaved();
+  }catch(e){ console.log('Save error:', e); }
+}
+
+function showSaved(){
+  const s = document.getElementById('saveStatus');
+  s.classList.add('show');
+  setTimeout(()=>s.classList.remove('show'), 2000);
+}
+
+function getQty(id, defaultQty){
+  return inventory[id] !== undefined ? inventory[id] : defaultQty;
+}
+
+function render(){
+  // Tabs
+  const tabs = document.getElementById('catTabs');
+  tabs.innerHTML = '';
+  CATALOG.forEach(cat => {
+    const btn = document.createElement('button');
+    btn.className = 'cat-tab' + (cat.id === activeCat ? ' active' : '');
+    btn.textContent = cat.label;
+    btn.onclick = () => { activeCat = cat.id; render(); };
+    tabs.appendChild(btn);
+  });
+
+  // Sections
+  const sections = document.getElementById('sections');
+  sections.innerHTML = '';
+  CATALOG.forEach(cat => {
+    const sec = document.createElement('div');
+    sec.className = 'section' + (cat.id === activeCat ? ' active' : '');
+
+    cat.items.forEach(sub => {
+      const subDiv = document.createElement('div');
+      subDiv.className = 'subsection';
+      const subTitle = document.createElement('div');
+      subTitle.className = 'subsection-title';
+      subTitle.textContent = sub.sub;
+      subDiv.appendChild(subTitle);
+
+      const grid = document.createElement('div');
+      grid.className = 'eq-grid';
+
+      sub.items.forEach(item => {
+        const qty = getQty(item.id, item.qty);
+        const card = document.createElement('div');
+        card.className = 'eq-card';
+
+        const status = document.createElement('div');
+        status.className = 'eq-status ' + (qty === 0 ? 'zero' : qty <= 2 ? 'low' : 'ok');
+
+        const info = document.createElement('div');
+        info.className = 'eq-info';
+        const name = document.createElement('div');
+        name.className = 'eq-name';
+        name.textContent = item.name;
+        info.appendChild(name);
+
+        const qtyDiv = document.createElement('div');
+        qtyDiv.className = 'eq-qty';
+
+        const btnMinus = document.createElement('button');
+        btnMinus.className = 'qty-btn';
+        btnMinus.textContent = '−';
+        btnMinus.onclick = () => {
+          const cur = getQty(item.id, item.qty);
+          const newQty = Math.max(0, cur - 1);
+          inventory[item.id] = newQty;
+          saveItem(item.id, newQty);
+          render();
+        };
+
+        const num = document.createElement('div');
+        num.className = 'qty-num' + (qty === 0 ? ' zero' : '');
+        num.textContent = qty;
+
+        const btnPlus = document.createElement('button');
+        btnPlus.className = 'qty-btn';
+        btnPlus.textContent = '+';
+        btnPlus.onclick = () => {
+          const cur = getQty(item.id, item.qty);
+          const newQty = cur + 1;
+          inventory[item.id] = newQty;
+          saveItem(item.id, newQty);
+          render();
+        };
+
+        qtyDiv.appendChild(btnMinus);
+        qtyDiv.appendChild(num);
+        qtyDiv.appendChild(btnPlus);
+
+        card.appendChild(status);
+        card.appendChild(info);
+        card.appendChild(qtyDiv);
+        grid.appendChild(card);
+      });
+
+      subDiv.appendChild(grid);
+      sec.appendChild(subDiv);
+    });
+
+    // Add new item button
+    const addRow = document.createElement('div');
+    addRow.className = 'add-item-row';
+    const inp = document.createElement('input');
+    inp.placeholder = '+ Νέο αντικείμενο...';
+    inp.type = 'text';
+    const addBtn = document.createElement('button');
+    addBtn.className = 'btn-add';
+    addBtn.textContent = 'Προσθήκη';
+    addBtn.onclick = () => {
+      const name = inp.value.trim();
+      if(!name) return;
+      const id = cat.id + '_custom_' + Date.now();
+      // Add to catalog dynamically
+      cat.items[cat.items.length-1].items.push({id, name, qty:0});
+      inventory[id] = 0;
+      saveItem(id, 0);
+      inp.value = '';
+      render();
+    };
+    addRow.appendChild(inp);
+    addRow.appendChild(addBtn);
+    sec.appendChild(addRow);
+
+    sections.appendChild(sec);
+  });
+}
+
+// Φόρτωση
+// Πρώτα ελέγχουμε αν υπάρχει το table inventory στη Supabase
+loadInventory();
+</script>
+</body>
+</html>
