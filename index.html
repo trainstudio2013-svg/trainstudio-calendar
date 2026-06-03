@@ -727,16 +727,14 @@ function buildPanel(container,evs,ds){
     /* NOTES - all */
     buildNotes(card,ev);
 
-    /* PACKING LIST - admin only */
-    if(isAdmin()){
-      var packBtn=document.createElement('button');
-      packBtn.textContent='📦 Packing List';
-      packBtn.style.cssText='width:100%;margin-top:8px;padding:9px;border-radius:8px;border:1.5px solid #86efac;background:#f0fdf4;color:#16a34a;font-size:12px;font-family:"DM Sans",sans-serif;font-weight:600;cursor:pointer;transition:all .15s;';
-      packBtn.addEventListener('mouseenter',function(){packBtn.style.background='#dcfce7';});
-      packBtn.addEventListener('mouseleave',function(){packBtn.style.background='#f0fdf4';});
-      packBtn.addEventListener('click',(function(evRef){return function(){openPackingList(evRef);};})(ev));
-      card.appendChild(packBtn);
-    }
+    /* PACKING LIST - ορατό σε όλους */
+    var packBtn=document.createElement('button');
+    packBtn.textContent='📦 Εξοπλισμός εκδήλωσης';
+    packBtn.style.cssText='width:100%;margin-top:8px;padding:9px;border-radius:8px;border:1.5px solid #86efac;background:#f0fdf4;color:#16a34a;font-size:12px;font-family:"DM Sans",sans-serif;font-weight:600;cursor:pointer;transition:all .15s;';
+    packBtn.addEventListener('mouseenter',function(){packBtn.style.background='#dcfce7';});
+    packBtn.addEventListener('mouseleave',function(){packBtn.style.background='#f0fdf4';});
+    packBtn.addEventListener('click',(function(evRef){return function(){openPackingList(evRef);};})(ev));
+    card.appendChild(packBtn);
 
     /* DELETE - admin only */
     if(isAdmin()){
@@ -2354,12 +2352,15 @@ async function openPackingList(ev){
 
   var packState={};
   PACK_CATALOG.forEach(function(cat){
+    var catItems=isAdmin()?cat.items:cat.items.filter(function(i){return (existing[i.id]||0)>0;});
+    if(catItems.length===0) return;
+
     var catHdr=document.createElement('div');
     catHdr.style.cssText='font-size:11px;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:.06em;margin:14px 0 8px;font-family:"DM Mono",monospace';
     catHdr.textContent=cat.cat;
     body.appendChild(catHdr);
 
-    cat.items.forEach(function(item){
+    catItems.forEach(function(item){
       var stock=warehouseStock[item.id]||0;
       var curQty=existing[item.id]||0;
       packState[item.id]=curQty;
@@ -2372,53 +2373,59 @@ async function openPackingList(ev){
       name.textContent=item.name;
 
       var stockBadge=document.createElement('div');
-      stockBadge.style.cssText='font-size:10px;color:'+(stock===0?'#ef4444':stock<=2?'#f59e0b':'#94a3b8')+';white-space:nowrap;font-family:"DM Mono",monospace';
-      stockBadge.textContent='Αποθ: '+stock;
+      stockBadge.style.cssText='font-size:10px;color:'+(stock===0?'#ef4444':stock<=2?'#f59e0b':'#64748b')+';white-space:nowrap;font-family:"DM Mono",monospace';
+      stockBadge.textContent='Διαθ: '+stock;
 
-      var qtyWrap=document.createElement('div');
-      qtyWrap.style.cssText='display:flex;align-items:center;gap:5px';
+      row.appendChild(name);
+      row.appendChild(stockBadge);
 
-      var btnM=document.createElement('button');
-      btnM.textContent='−';
-      btnM.style.cssText='width:26px;height:26px;border-radius:6px;border:1px solid #e2e8f0;background:#f8fafc;cursor:pointer;font-size:14px;font-weight:700;color:#475569';
+      if(isAdmin()){
+        // Admin: +/− controls
+        var qtyWrap=document.createElement('div');
+        qtyWrap.style.cssText='display:flex;align-items:center;gap:5px';
 
-      var num=document.createElement('div');
-      num.style.cssText='font-size:14px;font-weight:700;min-width:24px;text-align:center;font-family:"DM Mono",monospace;color:'+(curQty>0?'#2563eb':'#94a3b8');
-      num.textContent=curQty;
+        var btnM=document.createElement('button');
+        btnM.textContent='−';
+        btnM.style.cssText='width:26px;height:26px;border-radius:6px;border:1px solid #e2e8f0;background:#f8fafc;cursor:pointer;font-size:14px;font-weight:700;color:#475569';
 
-      var btnP=document.createElement('button');
-      btnP.textContent='+';
-      btnP.style.cssText='width:26px;height:26px;border-radius:6px;border:1px solid #e2e8f0;background:#f8fafc;cursor:pointer;font-size:14px;font-weight:700;color:#475569';
+        var num=document.createElement('div');
+        num.style.cssText='font-size:14px;font-weight:700;min-width:24px;text-align:center;font-family:"DM Mono",monospace;color:'+(curQty>0?'#2563eb':'#94a3b8');
+        num.textContent=curQty;
 
-      var warn=document.createElement('div');
-      warn.style.cssText='font-size:10px;color:#ef4444;display:none';
-      warn.textContent='⚠️';
+        var btnP=document.createElement('button');
+        btnP.textContent='+';
+        btnP.style.cssText='width:26px;height:26px;border-radius:6px;border:1px solid #e2e8f0;background:#f8fafc;cursor:pointer;font-size:14px;font-weight:700;color:#475569';
 
-      function updateDisplay(newQty){
-        // Περιορισμός στη διαθέσιμη ποσότητα
-        if(stock>0&&newQty>stock){
-          warn.style.display='inline';
-          warn.title='Έχεις μόνο '+stock+' στην αποθήκη';
-          newQty=stock;
-        } else {
-          warn.style.display='none';
+        var warn=document.createElement('div');
+        warn.style.cssText='font-size:10px;color:#ef4444;display:none';
+        warn.textContent='⚠️';
+
+        function updateDisplay(newQty){
+          if(stock>0&&newQty>stock){warn.style.display='inline';warn.title='Έχεις μόνο '+stock+' στην αποθήκη';newQty=stock;}
+          else{warn.style.display='none';}
+          packState[item.id]=newQty;
+          num.textContent=newQty;
+          num.style.color=newQty>0?'#2563eb':'#94a3b8';
+          name.style.fontWeight=newQty>0?'600':'400';
+          btnP.disabled=(stock>0&&newQty>=stock);
+          btnP.style.opacity=(stock>0&&newQty>=stock)?'0.3':'1';
         }
-        packState[item.id]=newQty;
-        num.textContent=newQty;
-        num.style.color=newQty>0?'#2563eb':'#94a3b8';
-        name.style.fontWeight=newQty>0?'600':'400';
-        btnP.disabled=(stock>0&&newQty>=stock);
-        btnP.style.opacity=(stock>0&&newQty>=stock)?'0.3':'1';
+
+        btnM.onclick=function(){updateDisplay(Math.max(0,packState[item.id]-1));};
+        btnP.onclick=function(){updateDisplay(packState[item.id]+1);};
+        if(stock>0&&curQty>=stock){btnP.disabled=true;btnP.style.opacity='0.3';}
+
+        qtyWrap.appendChild(btnM);qtyWrap.appendChild(num);qtyWrap.appendChild(btnP);
+        row.appendChild(qtyWrap);
+        row.appendChild(warn);
+      } else {
+        // Non-admin: read-only ποσότητα
+        var qtyBadge=document.createElement('div');
+        qtyBadge.style.cssText='font-size:14px;font-weight:700;color:#2563eb;font-family:"DM Mono",monospace;min-width:30px;text-align:right';
+        qtyBadge.textContent=curQty>0?'×'+curQty:'';
+        row.appendChild(qtyBadge);
       }
 
-      btnM.onclick=function(){updateDisplay(Math.max(0,packState[item.id]-1));};
-      btnP.onclick=function(){updateDisplay(packState[item.id]+1);};
-
-      // Αρχική κατάσταση
-      if(stock>0&&curQty>=stock){btnP.disabled=true;btnP.style.opacity='0.3';}
-
-      qtyWrap.appendChild(btnM);qtyWrap.appendChild(num);qtyWrap.appendChild(btnP);
-      row.appendChild(name);row.appendChild(stockBadge);row.appendChild(qtyWrap);row.appendChild(warn);
       body.appendChild(row);
     });
   });
@@ -2466,7 +2473,9 @@ async function openPackingList(ev){
   cancelBtn.style.cssText='padding:10px 12px;background:#f1f5f9;color:#475569;border:1px solid #e2e8f0;border-radius:8px;font-size:13px;cursor:pointer;font-family:"DM Sans",sans-serif';
   cancelBtn.onclick=function(){document.body.removeChild(overlay);};
 
-  footer.appendChild(saveBtn);footer.appendChild(printBtn);footer.appendChild(cancelBtn);
+  if(isAdmin()) footer.appendChild(saveBtn);
+  footer.appendChild(printBtn);
+  footer.appendChild(cancelBtn);
   box.appendChild(footer);
   overlay.appendChild(box);
   overlay.addEventListener('click',function(e){if(e.target===overlay)document.body.removeChild(overlay);});
