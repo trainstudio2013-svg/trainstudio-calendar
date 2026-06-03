@@ -2395,18 +2395,27 @@ async function openPackingList(ev){
       warn.textContent='⚠️';
 
       function updateDisplay(newQty){
+        // Περιορισμός στη διαθέσιμη ποσότητα
+        if(stock>0&&newQty>stock){
+          warn.style.display='inline';
+          warn.title='Έχεις μόνο '+stock+' στην αποθήκη';
+          newQty=stock;
+        } else {
+          warn.style.display='none';
+        }
         packState[item.id]=newQty;
         num.textContent=newQty;
         num.style.color=newQty>0?'#2563eb':'#94a3b8';
         name.style.fontWeight=newQty>0?'600':'400';
-        if(newQty>stock&&stock>0){warn.style.display='inline';warn.title='Έχεις μόνο '+stock+' στην αποθήκη';}
-        else{warn.style.display='none';}
+        btnP.disabled=(stock>0&&newQty>=stock);
+        btnP.style.opacity=(stock>0&&newQty>=stock)?'0.3':'1';
       }
 
       btnM.onclick=function(){updateDisplay(Math.max(0,packState[item.id]-1));};
       btnP.onclick=function(){updateDisplay(packState[item.id]+1);};
 
-      if(curQty>stock&&stock>0){warn.style.display='inline';}
+      // Αρχική κατάσταση
+      if(stock>0&&curQty>=stock){btnP.disabled=true;btnP.style.opacity='0.3';}
 
       qtyWrap.appendChild(btnM);qtyWrap.appendChild(num);qtyWrap.appendChild(btnP);
       row.appendChild(name);row.appendChild(stockBadge);row.appendChild(qtyWrap);row.appendChild(warn);
@@ -2447,16 +2456,66 @@ async function openPackingList(ev){
     }catch(e){saveBtn.textContent='💾 Αποθήκευση';saveBtn.disabled=false;}
   };
 
+  var printBtn=document.createElement('button');
+  printBtn.textContent='🖨 Εκτύπωση';
+  printBtn.style.cssText='padding:10px 12px;background:#f0fdf4;color:#16a34a;border:1px solid #86efac;border-radius:8px;font-size:13px;cursor:pointer;font-family:"DM Sans",sans-serif;font-weight:600';
+  printBtn.onclick=function(){printPackingList(ev,packState);};
+
   var cancelBtn=document.createElement('button');
   cancelBtn.textContent='Ακύρωση';
-  cancelBtn.style.cssText='padding:10px 16px;background:#f1f5f9;color:#475569;border:1px solid #e2e8f0;border-radius:8px;font-size:13px;cursor:pointer;font-family:"DM Sans",sans-serif';
+  cancelBtn.style.cssText='padding:10px 12px;background:#f1f5f9;color:#475569;border:1px solid #e2e8f0;border-radius:8px;font-size:13px;cursor:pointer;font-family:"DM Sans",sans-serif';
   cancelBtn.onclick=function(){document.body.removeChild(overlay);};
 
-  footer.appendChild(saveBtn);footer.appendChild(cancelBtn);
+  footer.appendChild(saveBtn);footer.appendChild(printBtn);footer.appendChild(cancelBtn);
   box.appendChild(footer);
   overlay.appendChild(box);
   overlay.addEventListener('click',function(e){if(e.target===overlay)document.body.removeChild(overlay);});
   document.body.appendChild(overlay);
+}
+function printPackingList(ev,packState){
+  var dateParts=ev.date.split('-');
+  var DAYS_GR=['Κυριακή','Δευτέρα','Τρίτη','Τετάρτη','Πέμπτη','Παρασκευή','Σάββατο'];
+  var MONTHS_GR=['Ιανουαρίου','Φεβρουαρίου','Μαρτίου','Απριλίου','Μαΐου','Ιουνίου','Ιουλίου','Αυγούστου','Σεπτεμβρίου','Οκτωβρίου','Νοεμβρίου','Δεκεμβρίου'];
+  var d=new Date(parseInt(dateParts[0]),parseInt(dateParts[1])-1,parseInt(dateParts[2]));
+  var dateStr=DAYS_GR[d.getDay()]+' '+parseInt(dateParts[2])+' '+MONTHS_GR[parseInt(dateParts[1])-1]+' '+dateParts[0];
+
+  var html='<!DOCTYPE html><html><head><meta charset="utf-8">';
+  html+='<title>Packing List — '+ev.title+'</title>';
+  html+='<style>';
+  html+='body{font-family:Arial,sans-serif;padding:30px;color:#1e293b;font-size:13px}';
+  html+='.header{border-bottom:2px solid #2563eb;padding-bottom:12px;margin-bottom:20px}';
+  html+='.title{font-size:20px;font-weight:700;color:#2563eb}';
+  html+='.date{font-size:13px;color:#475569;margin-top:4px}';
+  html+='.cat{font-size:11px;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:.06em;margin:16px 0 8px;border-bottom:1px solid #e2e8f0;padding-bottom:4px}';
+  html+='.item{display:flex;align-items:center;gap:12px;padding:7px 0;border-bottom:1px solid #f1f5f9}';
+  html+='.check{width:18px;height:18px;border:2px solid #475569;border-radius:3px;flex-shrink:0}';
+  html+='.item-name{flex:1;font-size:13px}';
+  html+='.item-qty{font-size:13px;font-weight:700;color:#2563eb;min-width:30px;text-align:right}';
+  html+='.total{margin-top:20px;font-size:12px;color:#64748b;border-top:1px solid #e2e8f0;padding-top:12px}';
+  html+='@media print{body{padding:15px}}';
+  html+='</style></head><body>';
+  html+='<div class="header"><div class="title">📦 '+ev.title+'</div>';
+  html+='<div class="date">'+dateStr+(ev.time?' — '+ev.time:'')+'</div></div>';
+
+  var total=0;
+  PACK_CATALOG.forEach(function(cat){
+    var catItems=cat.items.filter(function(item){return packState[item.id]>0;});
+    if(catItems.length===0) return;
+    html+='<div class="cat">'+cat.cat+'</div>';
+    catItems.forEach(function(item){
+      var qty=packState[item.id];
+      total+=qty;
+      html+='<div class="item"><div class="check"></div><div class="item-name">'+item.name+'</div><div class="item-qty">×'+qty+'</div></div>';
+    });
+  });
+
+  html+='<div class="total">Σύνολο: '+total+' τεμάχια</div>';
+  html+='</body></html>';
+
+  var win=window.open('','_blank');
+  win.document.write(html);
+  win.document.close();
+  win.onload=function(){win.print();};
 }
 /* ══════════════════════════════════════════════════════════ */
 
