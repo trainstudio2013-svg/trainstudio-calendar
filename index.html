@@ -2302,12 +2302,18 @@ var warehouseStock={};
 
 async function loadWarehouseStock(){
   try{
-    var r=await fetch(SB_URL+'/rest/v1/inventory?select=id,qty',{
-      headers:{'apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY}
+    var r=await fetch(SB_URL+'/rest/v1/inventory?select=id,qty&limit=1000',{
+      headers:{
+        'apikey':SB_KEY,
+        'Authorization':'Bearer '+SB_KEY,
+        'Range-Unit':'items',
+        'Prefer':'count=none'
+      }
     });
     var data=await r.json();
     if(Array.isArray(data)) data.forEach(function(row){warehouseStock[row.id]=row.qty;});
-  }catch(e){}
+    console.log('Warehouse stock loaded:', Object.keys(warehouseStock).length, 'items');
+  }catch(e){console.log('loadWarehouseStock error:',e);}
 }
 
 async function openPackingList(ev){
