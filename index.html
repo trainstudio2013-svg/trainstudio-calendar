@@ -53,6 +53,8 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);hei
 .p-equipment{background:#ffedd5;color:#9a3412}
 .p-studio{background:#d1fae5;color:#065f46}
 .p-ds{background:#e0f2fe;color:#0369a1}
+.p-setup{background:#fce7f3;color:#9d174d}
+.p-presetup{background:#f0fdf4;color:#166534;border:1px dashed #86efac}
 .ev-dot{display:none;width:5px;height:5px;border-radius:50%;background:var(--accent);position:absolute;bottom:5px;left:50%;transform:translateX(-50%)}
 .has-ev .ev-dot{display:block}
 /* SIDE */
@@ -317,6 +319,8 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);hei
         <div class="leg"><div class="leg-dot" style="background:#059669"></div>Στούντιο</div>
         <div class="leg"><div class="leg-dot" style="background:#0369a1"></div>ΔΣ</div>
         <div class="leg"><div class="leg-dot" style="background:#ea580c"></div>Εξοπλισμός</div>
+        <div class="leg"><div class="leg-dot" style="background:#db2777"></div>Εγκατάσταση</div>
+        <div class="leg"><div class="leg-dot" style="background:#16a34a"></div>PreSetup</div>
       </div>
       </div>
     </div>
@@ -357,7 +361,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);hei
 </div>
 <script>
 var MONTHS=['Ιανουάριος','Φεβρουάριος','Μάρτιος','Απρίλιος','Μάιος','Ιούνιος','Ιούλιος','Αύγουστος','Σεπτέμβριος','Οκτώβριος','Νοέμβριος','Δεκέμβριος'];
-var ROLES=['—','Ηχολήπτης','Ήχος','Φώτα','Φωτιστής','Βίντεο','Συντονιστής','Οδηγός','ΔΣ','Αποθήκη','Στούντιο','Εξοπλισμός','Άλλο'];
+var ROLES=['—','Ηχολήπτης','Ήχος','Φώτα','Φωτιστής','Βίντεο','Συντονιστής','Οδηγός','ΔΣ','Αποθήκη','Στούντιο','Εξοπλισμός','Φόρτωμα/Μάζεμα','Άλλο'];
 var COLORS=['#818cf8','#34d399','#fb923c','#f87171','#a3e635','#60a5fa','#f472b6','#4ade80','#facc15','#38bdf8','#c084fc','#fb7185'];
 var STAFF=[
   {name:'Παναγιώτης',admin:true,  email:'trainstudio@yahoo.gr'},
@@ -435,6 +439,23 @@ function saveEv(ev){
     notes:ev.notes||'',
     cat:ev.cat||'other'
   });
+  // Αυτόματο re-render ημερολογίου και panel μετά από κάθε αποθήκευση
+  renderCal();
+  renderMobileList();
+  if(ev.date){
+    var dayEvs=EVENTS.filter(function(e){return e.date===ev.date;});
+    if(isPortrait()){
+      var db=document.getElementById('drawerBody');
+      if(db&&document.getElementById('drawer').classList.contains('open')){
+        buildPanel(db,dayEvs,ev.date);
+      }
+    } else {
+      var si=document.getElementById('sideInner');
+      if(si&&si.querySelector('.ev-card')){
+        buildPanel(si,dayEvs,ev.date);
+      }
+    }
+  }
 }
 
 
@@ -451,6 +472,8 @@ function catCls(c){
   if(c==='studio') return 'p-studio';
   if(c==='ds') return 'p-ds';
   if(c==='equipment') return 'p-equipment';
+  if(c==='setup') return 'p-setup';
+  if(c==='presetup') return 'p-presetup';
   return 'p-other';
 }
 
@@ -508,8 +531,8 @@ function buildPanel(container,evs,ds){
       var titleRow=document.createElement('div');
       titleRow.style.cssText='display:flex;align-items:flex-start;justify-content:space-between;gap:6px;margin-bottom:4px;background:'+hdrBg+';margin:-14px -14px 8px -14px;padding:10px 14px;border-radius:8px 8px 0 0;';
       // Card header color based on category
-    var catColors={megaro:'rgba(237,233,254,0.7)',other:'rgba(254,240,138,0.5)',studio:'rgba(209,250,229,0.6)',ds:'rgba(224,242,254,0.6)'};
-    var catBorder={megaro:'#c4b5fd',other:'#fde047',studio:'#6ee7b7',ds:'#7dd3fc'};
+    var catColors={megaro:'rgba(237,233,254,0.7)',other:'rgba(254,240,138,0.5)',studio:'rgba(209,250,229,0.6)',ds:'rgba(224,242,254,0.6)',setup:'rgba(252,231,243,0.7)',presetup:'rgba(240,253,244,0.7)'};
+    var catBorder={megaro:'#c4b5fd',other:'#fde047',studio:'#6ee7b7',ds:'#7dd3fc',setup:'#f9a8d4',presetup:'#86efac'};
     var hdrBg=catColors[evRef.cat]||catColors.other;
     var hdrBorder=catBorder[evRef.cat]||catBorder.other;
     cardRef.style.borderColor=hdrBorder;
@@ -619,7 +642,9 @@ function buildPanel(container,evs,ds){
           {val:'other',     label:'🟡 Εκδήλωση',  bg:'#fef08a',border:'#fbbf24',color:'#92400e'},
           {val:'studio',    label:'🟢 Στούντιο',   bg:'#d1fae5',border:'#34d399',color:'#065f46'},
           {val:'ds',        label:'🔵 ΔΣ',         bg:'#e0f2fe',border:'#38bdf8',color:'#0369a1'},
-          {val:'equipment', label:'🟠 Εξοπλισμός', bg:'#ffedd5',border:'#fb923c',color:'#9a3412'}
+          {val:'equipment',  label:'🟠 Εξοπλισμός',  bg:'#ffedd5',border:'#fb923c',color:'#9a3412'},
+          {val:'setup',      label:'🩷 Εγκατάσταση', bg:'#fce7f3',border:'#f9a8d4',color:'#9d174d'},
+          {val:'presetup',   label:'🟩 PreSetup',     bg:'#f0fdf4',border:'#86efac',color:'#166534'}
         ];
         var catWrap=document.createElement('div');
         catWrap.style.cssText='display:flex;gap:5px;flex-wrap:wrap;margin-bottom:10px;';
@@ -710,7 +735,7 @@ function buildPanel(container,evs,ds){
   if(container.id==='sideInner'){
     var DAYS_GR2=['Κυρ','Δευ','Τρι','Τετ','Πεμ','Παρ','Σαβ'];
     var MONTHS_GR2=['Ιαν','Φεβ','Μαρ','Απρ','Μαΐ','Ιουν','Ιουλ','Αυγ','Σεπ','Οκτ','Νοε','Δεκ'];
-    var catColors2={megaro:'#7c3aed',other:'#d97706',studio:'#059669',ds:'#0284c7'};
+    var catColors2={megaro:'#7c3aed',other:'#d97706',studio:'#059669',ds:'#0284c7',setup:'#db2777',presetup:'#16a34a'};
     var todayStr2=new Date().getFullYear()+'-'+pad(new Date().getMonth()+1)+'-'+pad(new Date().getDate());
 
     // Εκδηλώσεις μήνα εκτός από την επιλεγμένη ημέρα, από σήμερα και μετά
@@ -1303,7 +1328,7 @@ function showMonthlySummary(){
   var MONTHS_FULL=['Ιανουάριος','Φεβρουάριος','Μάρτιος','Απρίλιος','Μάιος','Ιούνιος','Ιούλιος','Αύγουστος','Σεπτέμβριος','Οκτώβριος','Νοέμβριος','Δεκέμβριος'];
   var MONTHS_GEN=['Ιανουαρίου','Φεβρουαρίου','Μαρτίου','Απριλίου','Μαΐου','Ιουνίου','Ιουλίου','Αυγούστου','Σεπτεμβρίου','Οκτωβρίου','Νοεμβρίου','Δεκεμβρίου'];
   var DAYS_GR=['Κυρ','Δευ','Τρι','Τετ','Πεμ','Παρ','Σαβ'];
-  var catColors={megaro:'#7c3aed',other:'#d97706',studio:'#059669',ds:'#0284c7'};
+  var catColors={megaro:'#7c3aed',other:'#d97706',studio:'#059669',ds:'#0284c7',setup:'#db2777',presetup:'#16a34a'};
 
   // Εκδηλώσεις του τρέχοντος μήνα
   var monthEvs=EVENTS.filter(function(ev){
@@ -1608,7 +1633,7 @@ function renderMobileList(){
   var todayStr=todayFull.getFullYear()+'-'+pad(todayFull.getMonth()+1)+'-'+pad(todayFull.getDate());
   var DAYS_GR=['Κυρ','Δευ','Τρι','Τετ','Πεμ','Παρ','Σαβ'];
   var MONTHS_GR=['Ιαν','Φεβ','Μαρ','Απρ','Μαΐ','Ιουν','Ιουλ','Αυγ','Σεπ','Οκτ','Νοε','Δεκ'];
-  var catColors={megaro:'#7c3aed',other:'#d97706',studio:'#059669',ds:'#0284c7'};
+  var catColors={megaro:'#7c3aed',other:'#d97706',studio:'#059669',ds:'#0284c7',setup:'#db2777',presetup:'#16a34a'};
   var catLabels={megaro:'Μέγαρο',other:'Εκδήλωση',studio:'Στούντιο',ds:'ΔΣ'};
 
   // Φιλτράρισμα εκδηλώσεων: τρέχων μήνας, από σήμερα, μόνο οι δικές μου αν non-admin
