@@ -690,6 +690,62 @@ function buildPanel(container,evs,ds){
 
     container.appendChild(card);
   }
+
+  // Υπόλοιπες εκδηλώσεις του μήνα (μόνο desktop side panel)
+  if(container.id==='sideInner'){
+    var DAYS_GR2=['Κυρ','Δευ','Τρι','Τετ','Πεμ','Παρ','Σαβ'];
+    var MONTHS_GR2=['Ιαν','Φεβ','Μαρ','Απρ','Μαΐ','Ιουν','Ιουλ','Αυγ','Σεπ','Οκτ','Νοε','Δεκ'];
+    var catColors2={megaro:'#7c3aed',other:'#d97706',studio:'#059669',ds:'#0284c7'};
+    var todayStr2=new Date().getFullYear()+'-'+pad(new Date().getMonth()+1)+'-'+pad(new Date().getDate());
+
+    // Εκδηλώσεις μήνα εκτός από την επιλεγμένη ημέρα, από σήμερα και μετά
+    var restEvs=EVENTS.filter(function(ev){
+      if(!ev.date) return false;
+      var p=ev.date.split('-');
+      if(parseInt(p[0])!==curY||parseInt(p[1])-1!==curM) return false;
+      if(ev.date<todayStr2) return false;
+      if(ev.date===ds) return false;
+      if(!isAdmin()&&ev.assigned.indexOf(curUser)===-1) return false;
+      return true;
+    });
+    restEvs.sort(function(a,b){return a.date.localeCompare(b.date);});
+
+    if(restEvs.length>0){
+      var restHdr=document.createElement('div');
+      restHdr.style.cssText='font-size:10px;font-weight:600;color:#94a3b8;text-transform:uppercase;letter-spacing:.06em;font-family:"DM Mono",monospace;margin:16px 0 8px;border-top:1px solid #f1f5f9;padding-top:14px';
+      restHdr.textContent='Υπόλοιπες εκδηλώσεις μήνα';
+      container.appendChild(restHdr);
+
+      restEvs.forEach(function(ev){
+        var p=ev.date.split('-');
+        var d=new Date(parseInt(p[0]),parseInt(p[1])-1,parseInt(p[2]));
+        var item=document.createElement('div');
+        item.style.cssText='display:flex;align-items:center;gap:8px;padding:7px 10px;border-radius:8px;margin-bottom:5px;background:#f8fafc;border:1px solid #f1f5f9;cursor:pointer;transition:background .15s';
+        item.addEventListener('mouseenter',function(){item.style.background='#eff6ff';});
+        item.addEventListener('mouseleave',function(){item.style.background='#f8fafc';});
+        item.addEventListener('click',(function(evRef){return function(){
+          var dayEvs=EVENTS.filter(function(e){return e.date===evRef.date;});
+          buildPanel(container,dayEvs,evRef.date);
+        };})(ev));
+
+        var dot=document.createElement('div');
+        dot.style.cssText='width:8px;height:8px;border-radius:50%;background:'+(catColors2[ev.cat]||catColors2.other)+';flex-shrink:0';
+        var info=document.createElement('div');info.style.cssText='flex:1;min-width:0';
+        var t=document.createElement('div');
+        t.style.cssText='font-size:12px;font-weight:600;color:#1e293b;white-space:nowrap;overflow:hidden;text-overflow:ellipsis';
+        t.textContent=ev.title;
+        var dt=document.createElement('div');
+        dt.style.cssText='font-size:11px;color:#64748b;margin-top:1px';
+        dt.textContent=DAYS_GR2[d.getDay()]+' '+parseInt(p[2])+' '+MONTHS_GR2[parseInt(p[1])-1];
+        info.appendChild(t);info.appendChild(dt);
+        var time=document.createElement('div');
+        time.style.cssText='font-size:11px;color:#94a3b8;flex-shrink:0;white-space:nowrap';
+        time.textContent=ev.time||'';
+        item.appendChild(dot);item.appendChild(info);item.appendChild(time);
+        container.appendChild(item);
+      });
+    }
+  }
 }
 
 function buildMemberRow(parent,ev,si){
