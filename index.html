@@ -3,6 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
 <title>Train Studio</title>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600&family=DM+Mono:wght@400;500&display=swap');
@@ -700,6 +701,13 @@ function buildPanel(container,evs,ds){
     /* ASSIGNMENT COLLAPSE (admin) */
     if(isAdmin()){
       buildCollapse(card,ev);
+      // Κουμπί ειδοποίησης ομάδας
+      var notifyBtn=document.createElement('button');
+      notifyBtn.id='notifyBtn_'+ev.id;
+      notifyBtn.textContent='📧 Ειδοποίηση ομάδας';
+      notifyBtn.style.cssText='width:100%;margin-top:8px;padding:8px;border-radius:8px;border:1.5px solid #93c5fd;background:#eff6ff;color:#2563eb;font-size:12px;font-family:"DM Sans",sans-serif;font-weight:600;cursor:pointer;';
+      notifyBtn.addEventListener('click',(function(evRef){return function(){sendTeamNotification(evRef);};})(ev));
+      card.appendChild(notifyBtn);
     }
 
     /* VEHICLES */
@@ -2114,6 +2122,55 @@ function sendAssignmentEmail(ev, staffIndex){
     + '?subject=' + encodeURIComponent(subject)
     + '&body=' + encodeURIComponent(body);
   window.location.href = mailto;
+}
+
+// EmailJS init
+emailjs.init('diJGcKkGKKhYtf08H');
+
+function sendTeamNotification(ev){
+  if(!ev.assigned||ev.assigned.length===0){
+    alert('Δεν υπάρχουν assigned μέλη για αυτή την εκδήλωση.');
+    return;
+  }
+  var dateParts=ev.date.split('-');
+  var DAYS_GR=['Κυριακή','Δευτέρα','Τρίτη','Τετάρτη','Πέμπτη','Παρασκευή','Σάββατο'];
+  var MONTHS_GR=['Ιανουαρίου','Φεβρουαρίου','Μαρτίου','Απριλίου','Μαΐου','Ιουνίου','Ιουλίου','Αυγούστου','Σεπτεμβρίου','Οκτωβρίου','Νοεμβρίου','Δεκεμβρίου'];
+  var d=new Date(parseInt(dateParts[0]),parseInt(dateParts[1])-1,parseInt(dateParts[2]));
+  var dateStr=DAYS_GR[d.getDay()]+' '+parseInt(dateParts[2])+' '+MONTHS_GR[parseInt(dateParts[1])-1]+' '+dateParts[0];
+
+  var members=ev.assigned.map(function(si){return STAFF[si];}).filter(function(s){return s&&s.email;});
+  if(members.length===0){
+    alert('Κανένα μέλος δεν έχει email.');
+    return;
+  }
+
+  var sent=0;var failed=0;
+  var btn=document.getElementById('notifyBtn_'+ev.id);
+  if(btn){btn.textContent='⏳ Αποστολή...';btn.disabled=true;}
+
+  members.forEach(function(member,idx){
+    var si=ev.assigned.find(function(s){return STAFF[s]===member;});
+    var role=ev.roles[si]||'Μέλος ομάδας';
+    var message='Εκδήλωση: '+ev.title+'\nΗμερομηνία: '+dateStr+'\nΏρα: '+(ev.time||'—')+'\nΡόλος σου: '+role;
+
+    emailjs.send('service_rtc8jns','template_7hyctos',{
+      to_name: member.name,
+      to_email: member.email,
+      message: message
+    }).then(function(){
+      sent++;
+      if(sent+failed===members.length){
+        if(btn){btn.textContent='✅ Εστάλη σε '+sent+' μέλη';btn.disabled=false;}
+        if(failed>0) alert('Απέτυχε η αποστολή σε '+failed+' μέλη.');
+      }
+    },function(){
+      failed++;
+      if(sent+failed===members.length){
+        if(btn){btn.textContent='📧 Ειδοποίηση ομάδας';btn.disabled=false;}
+        alert('Απέτυχε η αποστολή σε '+failed+' μέλη.');
+      }
+    });
+  });
 }
 
 document.addEventListener('DOMContentLoaded', function(){
