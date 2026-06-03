@@ -312,6 +312,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);hei
       <div style="display:flex;align-items:center;gap:6px">
         <div id="currentUserBadge" style="font-size:12px;font-weight:600;color:#475569;background:#f1f5f9;border:1px solid #e2e8f0;border-radius:20px;padding:4px 12px;white-space:nowrap;display:none"></div>
         <button id="monthSummaryBtn" onclick="showMonthlySummary()" style="font-size:11px;padding:5px 10px;background:#f1f5f9;border:1px solid #e2e8f0;border-radius:8px;cursor:pointer;font-family:'DM Sans',sans-serif;color:#475569;font-weight:500;white-space:nowrap">📋 Δουλειές μήνα</button>
+        <button id="notifyAllBtn" onclick="sendAllNotifications()" style="font-size:11px;padding:5px 10px;background:#eff6ff;border:1px solid #93c5fd;border-radius:8px;cursor:pointer;font-family:'DM Sans',sans-serif;color:#2563eb;font-weight:500;white-space:nowrap;display:none">📧 Ειδοποίηση όλων</button>
       </div>
       <div style="display:flex;align-items:center;gap:8px">
         <div class="legend">
@@ -2041,6 +2042,9 @@ function updateTopbarUser(){
   document.getElementById('usel').value = curUser;
   // Hide user selector for non-admin — they can't switch to another user
   document.getElementById('usel').style.display = isAdmin() ? '' : 'none';
+  // Εμφάνιση κουμπιού ειδοποίησης μόνο για admin
+  var notifyAllBtn=document.getElementById('notifyAllBtn');
+  if(notifyAllBtn) notifyAllBtn.style.display=isAdmin()?'':'none';
   // Εμφάνιση ονόματος συνδεδεμένου χρήστη
   var badge=document.getElementById('currentUserBadge');
   if(badge && STAFF[curUser]){
@@ -2126,6 +2130,75 @@ function sendAssignmentEmail(ev, staffIndex){
 
 // EmailJS init
 emailjs.init('diJGcKkGKKhYtf08H');
+
+function sendAllNotifications(){
+  var DAYS_GR=['Κυριακή','Δευτέρα','Τρίτη','Τετάρτη','Πέμπτη','Παρασκευή','Σάββατο'];
+  var MONTHS_GR=['Ιανουαρίου','Φεβρουαρίου','Μαρτίου','Απριλίου','Μαΐου','Ιουνίου','Ιουλίου','Αυγούστου','Σεπτεμβρίου','Οκτωβρίου','Νοεμβρίου','Δεκεμβρίου'];
+
+  // Μάζεψε όλες τις εκδηλώσεις του μήνα με assigned
+  var monthEvs=EVENTS.filter(function(ev){
+    if(!ev.date) return false;
+    var p=ev.date.split('-');
+    return parseInt(p[0])===curY&&parseInt(p[1])-1===curM&&ev.assigned&&ev.assigned.length>0;
+  });
+
+  if(monthEvs.length===0){
+    alert('Δεν υπάρχουν αναθέσεις αυτό τον μήνα.');
+    return;
+  }
+
+  // Φτιάξε λίστα: ανά μέλος → λίστα εκδηλώσεών του
+  var memberMap={};
+  monthEvs.forEach(function(ev){
+    var p=ev.date.split('-');
+    var d=new Date(parseInt(p[0]),parseInt(p[1])-1,parseInt(p[2]));
+    var dateStr=DAYS_GR[d.getDay()]+' '+parseInt(p[2])+' '+MONTHS_GR[parseInt(p[1])-1];
+    ev.assigned.forEach(function(si){
+      var s=STAFF[si];
+      if(!s||!s.email) return;
+      if(!memberMap[si]) memberMap[si]={name:s.name,email:s.email,lines:[]};
+      var role=ev.roles[si]&&ev.roles[si]!=='—'?' ('+ev.roles[si]+')':'';
+      memberMap[si].lines.push('• '+ev.title+' — '+dateStr+(ev.time?' '+ev.time:'')+role);
+    });
+  });
+
+  var members=Object.keys(memberMap);
+  if(members.length===0){
+    alert('Κανένα μέλος δεν έχει email.');
+    return;
+  }
+
+  if(!confirm('Θα σταλεί email σε '+members.length+' μέλη. Συνέχεια;')) return;
+
+  var btn=document.getElementById('notifyAllBtn');
+  btn.textContent='⏳ Αποστολή...';
+  btn.disabled=true;
+
+  var sent=0,failed=0,total=members.length;
+  members.forEach(function(si){
+    var m=memberMap[si];
+    var message=m.lines.join('\n');
+    emailjs.send('service_rtc8jns','template_7hyctos',{
+      to_name:m.name,
+      to_email:m.email,
+      message:message
+    }).then(function(){
+      sent++;
+      if(sent+failed===total){
+        btn.textContent='✅ Εστάλη σε '+sent+' μέλη';
+        btn.disabled=false;
+        setTimeout(function(){btn.textContent='📧 Ειδοποίηση όλων';},3000);
+      }
+    },function(){
+      failed++;
+      if(sent+failed===total){
+        btn.textContent='📧 Ειδοποίηση όλων';
+        btn.disabled=false;
+        alert('Απέτυχε η αποστολή σε '+failed+' μέλη.');
+      }
+    });
+  });
+}
 
 function sendTeamNotification(ev){
   if(!ev.assigned||ev.assigned.length===0){
