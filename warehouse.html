@@ -71,6 +71,23 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min
 /* SAVE STATUS */
 .save-status{position:fixed;bottom:20px;right:20px;background:#1e293b;color:#fff;padding:10px 16px;border-radius:10px;font-size:12px;font-weight:600;opacity:0;transition:opacity .3s;pointer-events:none}
 .save-status.show{opacity:1}
+.edit-btn{width:28px;height:28px;border-radius:7px;border:1px solid #e2e8f0;background:#f8fafc;color:#94a3b8;font-size:13px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:all .15s;padding:0}
+.edit-btn:hover{border-color:#2563eb;color:#2563eb;background:#eff6ff}
+/* MODAL */
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:300;display:flex;align-items:center;justify-content:center;padding:20px}
+.modal-box{background:#fff;border-radius:14px;width:100%;max-width:400px;box-shadow:0 20px 60px rgba(0,0,0,.3)}
+.modal-hdr{padding:16px 20px;border-bottom:1px solid #e2e8f0;display:flex;align-items:center;justify-content:space-between}
+.modal-title{font-size:14px;font-weight:700;color:#1e293b}
+.modal-close{background:none;border:none;font-size:18px;cursor:pointer;color:#64748b}
+.modal-body{padding:16px 20px;display:flex;flex-direction:column;gap:12px}
+.modal-label{font-size:11px;font-weight:600;color:#64748b;text-transform:uppercase;letter-spacing:.05em;margin-bottom:4px}
+.modal-input{width:100%;padding:9px 12px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:13px;font-family:'DM Sans',sans-serif;outline:none;color:#1e293b}
+.modal-input:focus{border-color:#2563eb}
+.modal-select{width:100%;padding:9px 12px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:13px;font-family:'DM Sans',sans-serif;outline:none;color:#1e293b;background:#fff;cursor:pointer}
+.modal-footer{padding:14px 20px;border-top:1px solid #e2e8f0;display:flex;gap:8px}
+.btn-save{flex:1;padding:9px;background:#2563eb;color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif}
+.btn-delete{padding:9px 14px;background:#fee2e2;color:#dc2626;border:1px solid #fca5a5;border-radius:8px;font-size:13px;cursor:pointer;font-family:'DM Sans',sans-serif;font-weight:600}
+.btn-cancel{padding:9px 14px;background:#f1f5f9;color:#475569;border:1px solid #e2e8f0;border-radius:8px;font-size:13px;cursor:pointer;font-family:'DM Sans',sans-serif}
 
 /* MOBILE */
 @media(max-width:600px){
@@ -376,9 +393,19 @@ function render(){
         qtyDiv.appendChild(num);
         qtyDiv.appendChild(btnPlus);
 
+        const editBtn = document.createElement('button');
+        editBtn.className = 'edit-btn';
+        editBtn.textContent = '✏️';
+        editBtn.title = 'Επεξεργασία';
+        editBtn.onclick = (e) => {
+          e.stopPropagation();
+          openEditModal(item, cat, sub);
+        };
+
         card.appendChild(status);
         card.appendChild(info);
         card.appendChild(qtyDiv);
+        card.appendChild(editBtn);
         grid.appendChild(card);
       });
 
@@ -414,8 +441,127 @@ function render(){
   });
 }
 
+function openEditModal(item, cat, sub){
+  // Φτιάξε overlay
+  const overlay = document.createElement('div');
+  overlay.className = 'modal-overlay';
+
+  const box = document.createElement('div');
+  box.className = 'modal-box';
+
+  // Header
+  const hdr = document.createElement('div');
+  hdr.className = 'modal-hdr';
+  const title = document.createElement('div');
+  title.className = 'modal-title';
+  title.textContent = '✏️ Επεξεργασία';
+  const closeBtn = document.createElement('button');
+  closeBtn.className = 'modal-close';
+  closeBtn.textContent = '✕';
+  closeBtn.onclick = () => document.body.removeChild(overlay);
+  hdr.appendChild(title); hdr.appendChild(closeBtn);
+  box.appendChild(hdr);
+
+  // Body
+  const body = document.createElement('div');
+  body.className = 'modal-body';
+
+  // Όνομα
+  const nameLbl = document.createElement('div');
+  nameLbl.className = 'modal-label';
+  nameLbl.textContent = 'Όνομα';
+  const nameInp = document.createElement('input');
+  nameInp.className = 'modal-input';
+  nameInp.value = item.name;
+  body.appendChild(nameLbl);
+  body.appendChild(nameInp);
+
+  // Κατηγορία
+  const catLbl = document.createElement('div');
+  catLbl.className = 'modal-label';
+  catLbl.textContent = 'Κατηγορία';
+  const catSel = document.createElement('select');
+  catSel.className = 'modal-select';
+  CATALOG.forEach(c => {
+    c.items.forEach(s => {
+      const opt = document.createElement('option');
+      opt.value = c.id + '|||' + s.sub;
+      opt.textContent = c.label + ' → ' + s.sub;
+      opt.selected = (c.id === cat.id && s.sub === sub.sub);
+      catSel.appendChild(opt);
+    });
+  });
+  body.appendChild(catLbl);
+  body.appendChild(catSel);
+
+  box.appendChild(body);
+
+  // Footer
+  const footer = document.createElement('div');
+  footer.className = 'modal-footer';
+
+  const saveBtn = document.createElement('button');
+  saveBtn.className = 'btn-save';
+  saveBtn.textContent = '💾 Αποθήκευση';
+  saveBtn.onclick = () => {
+    const newName = nameInp.value.trim();
+    if(!newName) return;
+    const [newCatId, newSubName] = catSel.value.split('|||');
+
+    // Αφαίρεση από παλιά θέση
+    const oldIdx = sub.items.indexOf(item);
+    if(oldIdx !== -1) sub.items.splice(oldIdx, 1);
+
+    // Αλλαγή ονόματος
+    item.name = newName;
+
+    // Προσθήκη στη νέα κατηγορία
+    const newCat = CATALOG.find(c => c.id === newCatId);
+    const newSub = newCat ? newCat.items.find(s => s.sub === newSubName) : null;
+    if(newSub) newSub.items.push(item);
+
+    document.body.removeChild(overlay);
+    activeCat = newCatId;
+    render();
+    showSaved();
+  };
+
+  const deleteBtn = document.createElement('button');
+  deleteBtn.className = 'btn-delete';
+  deleteBtn.textContent = '🗑 Διαγραφή';
+  deleteBtn.onclick = async () => {
+    if(!confirm('Διαγραφή "' + item.name + '";')) return;
+    // Αφαίρεση από catalog
+    const idx = sub.items.indexOf(item);
+    if(idx !== -1) sub.items.splice(idx, 1);
+    // Διαγραφή από Supabase
+    try{
+      await fetch(SUPABASE_URL+'/rest/v1/inventory?id=eq.'+encodeURIComponent(item.id), {
+        method:'DELETE',
+        headers:{'apikey':SUPABASE_KEY,'Authorization':'Bearer '+SUPABASE_KEY,'Prefer':'return=minimal'}
+      });
+    }catch(e){}
+    delete inventory[item.id];
+    document.body.removeChild(overlay);
+    render();
+  };
+
+  const cancelBtn = document.createElement('button');
+  cancelBtn.className = 'btn-cancel';
+  cancelBtn.textContent = 'Ακύρωση';
+  cancelBtn.onclick = () => document.body.removeChild(overlay);
+
+  footer.appendChild(saveBtn);
+  footer.appendChild(deleteBtn);
+  footer.appendChild(cancelBtn);
+  box.appendChild(footer);
+
+  overlay.appendChild(box);
+  overlay.addEventListener('click', e => { if(e.target === overlay) document.body.removeChild(overlay); });
+  document.body.appendChild(overlay);
+}
+
 // Φόρτωση
-// Πρώτα ελέγχουμε αν υπάρχει το table inventory στη Supabase
 loadInventory();
 </script>
 </body>

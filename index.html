@@ -727,6 +727,17 @@ function buildPanel(container,evs,ds){
     /* NOTES - all */
     buildNotes(card,ev);
 
+    /* PACKING LIST - admin only */
+    if(isAdmin()){
+      var packBtn=document.createElement('button');
+      packBtn.textContent='📦 Packing List';
+      packBtn.style.cssText='width:100%;margin-top:8px;padding:9px;border-radius:8px;border:1.5px solid #86efac;background:#f0fdf4;color:#16a34a;font-size:12px;font-family:"DM Sans",sans-serif;font-weight:600;cursor:pointer;transition:all .15s;';
+      packBtn.addEventListener('mouseenter',function(){packBtn.style.background='#dcfce7';});
+      packBtn.addEventListener('mouseleave',function(){packBtn.style.background='#f0fdf4';});
+      packBtn.addEventListener('click',(function(evRef){return function(){openPackingList(evRef);};})(ev));
+      card.appendChild(packBtn);
+    }
+
     /* DELETE - admin only */
     if(isAdmin()){
       var delBtn=document.createElement('button');
@@ -2248,6 +2259,200 @@ function sendTeamNotification(ev){
     });
   });
 }
+
+/* ══ PACKING LIST ══════════════════════════════════════════ */
+var PACK_CATALOG=[
+  {cat:'🔊 Ήχος',items:[
+    {id:'tw_t24n_60',name:'TW Audio T24 60°'},{id:'tw_t24n_90',name:'TW Audio T24 90°'},
+    {id:'tw_b30',name:'TW Audio B30'},{id:'tw_b21',name:'TW Audio B21'},
+    {id:'fbt_sub18',name:'FBT SUB 18"'},{id:'fbt_mon15',name:'FBT MON 15"'},
+    {id:'fbt_mon12',name:'FBT MON 12"'},{id:'turbosound12',name:'Turbosound 12"'},
+    {id:'ev_zlx15',name:'EV ZLX 15"'},{id:'ev_zlx12',name:'EV ZLX 12"'},
+    {id:'bose_s1',name:'Bose S1'},{id:'ev_1212',name:'EV 1212'},{id:'jh212',name:'JH212'},
+    {id:'ampl_k3',name:'AMPL K3'},{id:'ampl_x4',name:'AMPL X4'},{id:'lab_gruppen_3200',name:'LAB Gruppen 3200'},
+    {id:'behringer_wing',name:'Behringer Wing'},{id:'midas_m32',name:'Midas M32'},
+    {id:'midas_m32r',name:'Midas M32R'},{id:'xair_x18',name:'XAir X18'},
+    {id:'midas_dl231',name:'Midas DL231'},{id:'behringer_dl32_a',name:'Behringer DL32'},
+  ]},
+  {cat:'🎸 Backline',items:[
+    {id:'fender_amp',name:'Fender Amp'},{id:'bugera_amp',name:'Bugera Amp'},
+    {id:'bassman_amp',name:'Bassman Amp'},{id:'nord_piano5',name:'Nord Piano 5'},
+    {id:'korg_kronos',name:'Korg Kronos'},{id:'drum_set',name:'Σετ τύμπανων'},{id:'p16',name:'P16'},
+  ]},
+  {cat:'🔌 Καλώδια',items:[
+    {id:'xlr_1m',name:'XLR 1m'},{id:'xlr_2m',name:'XLR 2m'},{id:'xlr_3m',name:'XLR 3m'},
+    {id:'xlr_75m',name:'XLR 7.5m'},{id:'xlr_10m',name:'XLR 10m'},{id:'xlr_15m',name:'XLR 15m'},
+    {id:'xlr_20m',name:'XLR 20m'},{id:'jack_3m',name:'Jack/Jack 3m'},{id:'jack_5m',name:'Jack/Jack 5m'},
+    {id:'return',name:'Επιστροφές'},{id:'speakon',name:'Speakon'},
+  ]},
+  {cat:'⚡ Παροχές',items:[
+    {id:'rack_63a',name:'63A Rack'},{id:'box_62a',name:'62A Box'},{id:'box_16a',name:'16A Box'},
+    {id:'cables_16a',name:'16A Cables'},{id:'polyprizoΓ',name:'Πολύπριζο'},{id:'extension',name:'Προέκταση'},
+  ]},
+  {cat:'🎤 Stands',items:[
+    {id:'speaker_stand',name:'Speaker Stand'},{id:'mic_stand',name:'Mic Stand'},
+    {id:'music_stand',name:'Music Stand'},{id:'instrument_stand',name:'Instrument Stand'},
+  ]},
+  {cat:'💡 Φώτα',items:[{id:'light_mixer',name:'Light Mixer'},{id:'light_box',name:'Light Box'}]},
+  {cat:'📹 AV',items:[{id:'projector',name:'Projector'},{id:'tv',name:'TV'},{id:'converter',name:'Converter'}]},
+  {cat:'🏗 Truss',items:[{id:'truss_tower',name:'Πύργος'},{id:'truss_jinia',name:'Τζίνια'}]},
+];
+
+var warehouseStock={};
+
+async function loadWarehouseStock(){
+  try{
+    var r=await fetch(SUPABASE_URL+'/rest/v1/inventory?select=id,qty',{
+      headers:{'apikey':SUPABASE_KEY,'Authorization':'Bearer '+SUPABASE_KEY}
+    });
+    var data=await r.json();
+    if(Array.isArray(data)) data.forEach(function(row){warehouseStock[row.id]=row.qty;});
+  }catch(e){}
+}
+
+async function openPackingList(ev){
+  await loadWarehouseStock();
+  // Φόρτωση υπάρχοντος packing list
+  var existing={};
+  try{
+    var r=await fetch(SUPABASE_URL+'/rest/v1/packing_lists?event_id=eq.'+encodeURIComponent(ev.id)+'&select=item_id,qty',{
+      headers:{'apikey':SUPABASE_KEY,'Authorization':'Bearer '+SUPABASE_KEY}
+    });
+    var data=await r.json();
+    if(Array.isArray(data)) data.forEach(function(row){existing[row.item_id]=row.qty;});
+  }catch(e){}
+
+  // Φτιάξε modal
+  var overlay=document.createElement('div');
+  overlay.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:300;display:flex;align-items:flex-start;justify-content:center;padding:20px;overflow-y:auto';
+
+  var box=document.createElement('div');
+  box.style.cssText='background:#fff;border-radius:14px;width:100%;max-width:560px;box-shadow:0 20px 60px rgba(0,0,0,.3);margin:auto';
+
+  // Header
+  var hdr=document.createElement('div');
+  hdr.style.cssText='padding:18px 20px;border-bottom:1px solid #e2e8f0;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;background:#fff;border-radius:14px 14px 0 0;z-index:1';
+  var htitle=document.createElement('div');
+  htitle.style.cssText='font-size:15px;font-weight:700;color:#1e293b';
+  htitle.textContent='📦 Packing List — '+ev.title;
+  var closeBtn=document.createElement('button');
+  closeBtn.textContent='✕';
+  closeBtn.style.cssText='background:none;border:none;font-size:18px;cursor:pointer;color:#64748b;padding:4px';
+  closeBtn.onclick=function(){document.body.removeChild(overlay);};
+  hdr.appendChild(htitle);hdr.appendChild(closeBtn);
+  box.appendChild(hdr);
+
+  // Body
+  var body=document.createElement('div');
+  body.style.cssText='padding:16px 20px;max-height:70vh;overflow-y:auto';
+
+  var packState={};
+  PACK_CATALOG.forEach(function(cat){
+    var catHdr=document.createElement('div');
+    catHdr.style.cssText='font-size:11px;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:.06em;margin:14px 0 8px;font-family:"DM Mono",monospace';
+    catHdr.textContent=cat.cat;
+    body.appendChild(catHdr);
+
+    cat.items.forEach(function(item){
+      var stock=warehouseStock[item.id]||0;
+      var curQty=existing[item.id]||0;
+      packState[item.id]=curQty;
+
+      var row=document.createElement('div');
+      row.style.cssText='display:flex;align-items:center;gap:10px;padding:7px 0;border-bottom:1px solid #f8fafc';
+
+      var name=document.createElement('div');
+      name.style.cssText='flex:1;font-size:13px;color:#1e293b;font-weight:'+(curQty>0?'600':'400');
+      name.textContent=item.name;
+
+      var stockBadge=document.createElement('div');
+      stockBadge.style.cssText='font-size:10px;color:'+(stock===0?'#ef4444':stock<=2?'#f59e0b':'#94a3b8')+';white-space:nowrap;font-family:"DM Mono",monospace';
+      stockBadge.textContent='Αποθ: '+stock;
+
+      var qtyWrap=document.createElement('div');
+      qtyWrap.style.cssText='display:flex;align-items:center;gap:5px';
+
+      var btnM=document.createElement('button');
+      btnM.textContent='−';
+      btnM.style.cssText='width:26px;height:26px;border-radius:6px;border:1px solid #e2e8f0;background:#f8fafc;cursor:pointer;font-size:14px;font-weight:700;color:#475569';
+
+      var num=document.createElement('div');
+      num.style.cssText='font-size:14px;font-weight:700;min-width:24px;text-align:center;font-family:"DM Mono",monospace;color:'+(curQty>0?'#2563eb':'#94a3b8');
+      num.textContent=curQty;
+
+      var btnP=document.createElement('button');
+      btnP.textContent='+';
+      btnP.style.cssText='width:26px;height:26px;border-radius:6px;border:1px solid #e2e8f0;background:#f8fafc;cursor:pointer;font-size:14px;font-weight:700;color:#475569';
+
+      var warn=document.createElement('div');
+      warn.style.cssText='font-size:10px;color:#ef4444;display:none';
+      warn.textContent='⚠️';
+
+      function updateDisplay(newQty){
+        packState[item.id]=newQty;
+        num.textContent=newQty;
+        num.style.color=newQty>0?'#2563eb':'#94a3b8';
+        name.style.fontWeight=newQty>0?'600':'400';
+        if(newQty>stock&&stock>0){warn.style.display='inline';warn.title='Έχεις μόνο '+stock+' στην αποθήκη';}
+        else{warn.style.display='none';}
+      }
+
+      btnM.onclick=function(){updateDisplay(Math.max(0,packState[item.id]-1));};
+      btnP.onclick=function(){updateDisplay(packState[item.id]+1);};
+
+      if(curQty>stock&&stock>0){warn.style.display='inline';}
+
+      qtyWrap.appendChild(btnM);qtyWrap.appendChild(num);qtyWrap.appendChild(btnP);
+      row.appendChild(name);row.appendChild(stockBadge);row.appendChild(qtyWrap);row.appendChild(warn);
+      body.appendChild(row);
+    });
+  });
+
+  box.appendChild(body);
+
+  // Footer
+  var footer=document.createElement('div');
+  footer.style.cssText='padding:14px 20px;border-top:1px solid #e2e8f0;display:flex;gap:8px';
+
+  var saveBtn=document.createElement('button');
+  saveBtn.textContent='💾 Αποθήκευση';
+  saveBtn.style.cssText='flex:1;padding:10px;background:#2563eb;color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;font-family:"DM Sans",sans-serif';
+  saveBtn.onclick=async function(){
+    saveBtn.textContent='⏳ Αποθήκευση...';saveBtn.disabled=true;
+    var rows=[];
+    Object.keys(packState).forEach(function(id){
+      if(packState[id]>0) rows.push({event_id:ev.id,item_id:id,qty:packState[id]});
+    });
+    // Διαγραφή παλιών
+    try{
+      await fetch(SUPABASE_URL+'/rest/v1/packing_lists?event_id=eq.'+encodeURIComponent(ev.id),{
+        method:'DELETE',
+        headers:{'apikey':SUPABASE_KEY,'Authorization':'Bearer '+SUPABASE_KEY,'Prefer':'return=minimal'}
+      });
+      if(rows.length>0){
+        await fetch(SUPABASE_URL+'/rest/v1/packing_lists',{
+          method:'POST',
+          headers:{'apikey':SUPABASE_KEY,'Authorization':'Bearer '+SUPABASE_KEY,'Content-Type':'application/json','Prefer':'return=minimal'},
+          body:JSON.stringify(rows)
+        });
+      }
+      saveBtn.textContent='✅ Αποθηκεύτηκε!';
+      setTimeout(function(){document.body.removeChild(overlay);},800);
+    }catch(e){saveBtn.textContent='💾 Αποθήκευση';saveBtn.disabled=false;}
+  };
+
+  var cancelBtn=document.createElement('button');
+  cancelBtn.textContent='Ακύρωση';
+  cancelBtn.style.cssText='padding:10px 16px;background:#f1f5f9;color:#475569;border:1px solid #e2e8f0;border-radius:8px;font-size:13px;cursor:pointer;font-family:"DM Sans",sans-serif';
+  cancelBtn.onclick=function(){document.body.removeChild(overlay);};
+
+  footer.appendChild(saveBtn);footer.appendChild(cancelBtn);
+  box.appendChild(footer);
+  overlay.appendChild(box);
+  overlay.addEventListener('click',function(e){if(e.target===overlay)document.body.removeChild(overlay);});
+  document.body.appendChild(overlay);
+}
+/* ══════════════════════════════════════════════════════════ */
 
 document.addEventListener('DOMContentLoaded', function(){
   document.getElementById('loginBtn').addEventListener('click', doLogin);
