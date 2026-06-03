@@ -150,18 +150,19 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);hei
   #topbarExtra button{font-size:10px;padding:4px 7px}
 }
 /* MOBILE EVENT LIST */
-.mobile-ev-list{display:none}
+.mobile-ev-list{display:flex;flex-direction:column;gap:6px;overflow-y:auto;flex:1;padding:6px 0 8px 0;margin-top:6px;-webkit-overflow-scrolling:touch}
+.mobile-ev-item{display:flex;align-items:center;gap:10px;background:#fff;border-radius:10px;padding:9px 12px;box-shadow:0 1px 4px rgba(0,0,0,.07);cursor:pointer;border:1.5px solid #e2e8f0;flex-shrink:0}
+.mobile-ev-item:hover{background:#f1f5f9}
+.mobile-ev-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0}
+.mobile-ev-info{flex:1;min-width:0}
+.mobile-ev-title{font-size:13px;font-weight:600;color:#1e293b;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.mobile-ev-date{font-size:11px;color:#64748b;margin-top:1px}
+.mobile-ev-time{font-size:11px;color:#94a3b8;flex-shrink:0}
+.mobile-ev-empty{text-align:center;color:#94a3b8;font-size:13px;padding:20px 0}
 .mobile-ev-list.visible{display:flex;flex-direction:column;gap:6px;overflow-y:auto;flex:1;padding:6px 2px 8px 2px;-webkit-overflow-scrolling:touch}
 @media(max-width:600px) and (orientation:portrait){
-  .mobile-ev-list{display:flex;flex-direction:column;gap:6px;overflow-y:auto;flex:1;padding:6px 2px 8px 2px;margin-top:6px;-webkit-overflow-scrolling:touch}
-  .mobile-ev-item{display:flex;align-items:center;gap:10px;background:#fff;border-radius:10px;padding:9px 12px;box-shadow:0 1px 4px rgba(0,0,0,.07);cursor:pointer;border:1.5px solid #e2e8f0;flex-shrink:0}
+  .mobile-ev-list{padding:6px 2px 8px 2px}
   .mobile-ev-item:active{background:#f1f5f9}
-  .mobile-ev-dot{width:12px;height:12px;border-radius:50%;flex-shrink:0}
-  .mobile-ev-info{flex:1;min-width:0}
-  .mobile-ev-title{font-size:13px;font-weight:600;color:#1e293b;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-  .mobile-ev-date{font-size:11px;color:#64748b;margin-top:1px}
-  .mobile-ev-time{font-size:11px;color:#94a3b8;flex-shrink:0}
-  .mobile-ev-empty{text-align:center;color:#94a3b8;font-size:13px;padding:20px 0}
   .side,.side-toggle{display:none!important}
   .topbar{padding:0 10px;flex-wrap:nowrap;height:50px!important;min-height:50px;max-height:50px}
   .topbar-right{gap:5px}
@@ -1601,9 +1602,7 @@ function doPrint(si,selMonths,MONTHS_FULL,MONTHS_GEN,DAYS_GR,win){
 function renderMobileList(){
   var el=document.getElementById('mobileEvList');
   if(!el) return;
-  // Μεγάλο desktop με side panel: δεν χρειάζεται η λίστα
-  var hasSidePanel=window.innerWidth>1000&&!('ontouchstart' in window);
-  if(hasSidePanel){el.innerHTML='';return;}
+  // Πάντα εμφάνιση λίστας — σε όλα τα μεγέθη
   var TODAY_STR=curY+'-'+pad(curM+1)+'-01';
   var todayFull=new Date();
   var todayStr=todayFull.getFullYear()+'-'+pad(todayFull.getMonth()+1)+'-'+pad(todayFull.getDate());
