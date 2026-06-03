@@ -225,6 +225,20 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);hei
   .mobile-ev-list{display:flex!important;flex-direction:column;gap:6px;overflow-y:auto;flex:none;max-height:200px;padding:6px 8px 8px 8px;margin-top:4px;-webkit-overflow-scrolling:touch}
 }
 
+/* Μεσαίο παράθυρο desktop (600-1000px) — side panel κρύβεται, λίστα εμφανίζεται */
+@media(min-width:601px) and (max-width:1000px) and (pointer:fine){
+  .side,.side-toggle{display:none!important}
+  .cal-wrap{padding:12px 12px 8px 12px}
+  .mobile-ev-list{display:flex!important;flex-direction:column;gap:6px;overflow-y:auto;flex:1;padding:8px 0 12px 0;margin-top:8px;-webkit-overflow-scrolling:touch}
+  .mobile-ev-item{display:flex;align-items:center;gap:10px;background:#fff;border-radius:10px;padding:9px 12px;box-shadow:0 1px 4px rgba(0,0,0,.07);cursor:pointer;border:1.5px solid #e2e8f0;flex-shrink:0}
+  .mobile-ev-item:hover{background:#f1f5f9}
+  .mobile-ev-dot{width:12px;height:12px;border-radius:50%;flex-shrink:0;display:block}
+  .mobile-ev-info{flex:1;min-width:0;display:block}
+  .mobile-ev-title{font-size:13px;font-weight:600;color:#1e293b;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;display:block}
+  .mobile-ev-date{font-size:11px;color:#64748b;margin-top:1px;display:block}
+  .mobile-ev-time{font-size:11px;color:#94a3b8;flex-shrink:0;display:block}
+}
+
 @media(orientation:landscape) and (max-height:500px) and (max-width:900px){
   /* Κινητό σε landscape — κρύβουμε ημερολόγιο, δείχνουμε μόνο λίστα */
   .side,.side-toggle{display:none!important}
@@ -1587,13 +1601,9 @@ function doPrint(si,selMonths,MONTHS_FULL,MONTHS_GEN,DAYS_GR,win){
 function renderMobileList(){
   var el=document.getElementById('mobileEvList');
   if(!el) return;
-  // Desktop: προσθήκη class για διαφορετικό styling
-  var isDesktop=window.innerWidth>1100&&!('ontouchstart' in window);
-  if(isDesktop){
-    el.classList.add('desktop-list');
-  } else {
-    el.classList.remove('desktop-list');
-  }
+  // Μεγάλο desktop με side panel: δεν χρειάζεται η λίστα
+  var hasSidePanel=window.innerWidth>1000&&!('ontouchstart' in window);
+  if(hasSidePanel){el.innerHTML='';return;}
   var TODAY_STR=curY+'-'+pad(curM+1)+'-01';
   var todayFull=new Date();
   var todayStr=todayFull.getFullYear()+'-'+pad(todayFull.getMonth()+1)+'-'+pad(todayFull.getDate());
