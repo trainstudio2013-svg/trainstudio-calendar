@@ -2807,8 +2807,9 @@ async function openReturnEquipment(ev){
   }catch(e){}
 
   var items=[];
-  PACK_CATALOG.forEach(function(cat){
-    cat.items.forEach(function(item){
+  var catalogSrc=dynamicCatalog.length>0?dynamicCatalog:PACK_CATALOG;
+  catalogSrc.forEach(function(cat){
+    getCatItems(cat).forEach(function(item){
       if((existing[item.id]||0)>0) items.push({id:item.id,name:item.name,qty:existing[item.id],cat:cat.cat});
     });
   });
