@@ -2933,7 +2933,7 @@ function showMissingEquipment(){
     var retBtn=document.createElement('button');
     retBtn.textContent='↩️ Επιστροφή';
     retBtn.style.cssText='font-size:11px;padding:4px 8px;background:#fee2e2;color:#dc2626;border:1px solid #fca5a5;border-radius:6px;cursor:pointer;font-weight:700;font-family:"DM Sans",sans-serif;white-space:nowrap';
-    retBtn.onclick=(function(ev){return function(){document.body.removeChild(overlay);openPackingList(ev,true);};})(m.ev);
+    retBtn.onclick=(function(ev){return function(){document.body.removeChild(overlay);openReturnEquipment(ev);};})(m.ev);
     evHeader.appendChild(evTitle);evHeader.appendChild(retBtn);
     evDiv.appendChild(evHeader);
 
