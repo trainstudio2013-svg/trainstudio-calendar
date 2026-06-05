@@ -2629,8 +2629,8 @@ async function openPackingList(ev, openCatalog){
       subsToRender.forEach(function(subObj){
         if(subObj.sub){
           var subHdr=document.createElement('div');
-          subHdr.style.cssText='font-size:10px;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:.06em;margin:10px 0 5px 4px;font-family:"DM Mono",monospace';
-          subHdr.textContent='— '+subObj.sub;
+          subHdr.style.cssText='font-size:11px;font-weight:800;color:#475569;text-transform:uppercase;letter-spacing:.08em;margin:10px 0 5px;font-family:"DM Mono",monospace;text-align:center;background:#f1f5f9;padding:5px 8px;border-radius:6px;border-left:3px solid #94a3b8';
+          subHdr.textContent=subObj.sub;
           catalogSection.appendChild(subHdr);
         }
         subObj.items.forEach(function(item){
