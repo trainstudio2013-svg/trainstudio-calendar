@@ -2318,61 +2318,105 @@ var DEP_NAMES={
   'eth_10m':'Καρούλι Ethernet 10m',
 };
 
+// PACK_CATALOG — με υποκατηγορίες (sub) αντιστοιχισμένες με warehouse
 var PACK_CATALOG=[
-  {cat:'🔊 Ήχος',items:[
-    {id:'tw_t24n_60',name:'TW Audio T24 60°'},{id:'tw_t24n_90',name:'TW Audio T24 90°'},
-    {id:'tw_b30',name:'TW Audio B30'},{id:'tw_b21',name:'TW Audio B21'},
-    {id:'fbt_sub18',name:'FBT SUB 18"'},{id:'fbt_mon15',name:'FBT MON 15"'},
-    {id:'fbt_mon12',name:'FBT MON 12"'},{id:'turbosound12',name:'Turbosound 12"'},
-    {id:'ev_zlx15',name:'EV ZLX 15"'},{id:'ev_zlx12',name:'EV ZLX 12"'},
-    {id:'bose_s1',name:'Bose S1'},{id:'ev_1212',name:'EV 1212'},{id:'jh212',name:'JH212'},
-    {id:'ampl_k3',name:'AMPL K3'},{id:'ampl_x4',name:'AMPL X4'},{id:'lab_gruppen_3200',name:'LAB Gruppen 3200'},
-    {id:'behringer_wing',name:'Behringer Wing'},{id:'midas_m32',name:'Midas M32'},
-    {id:'midas_m32r',name:'Midas M32R'},{id:'xair_x18',name:'XAir X18'},
-    {id:'soundcraft_mfxi',name:'Soundcraft MFXi'},{id:'midas_dl231',name:'Midas DL231'},
-    {id:'behringer_dl32_a',name:'Behringer DL32 (1)'},{id:'behringer_dl32_b',name:'Behringer DL32 (2)'},
-    {id:'pole',name:'Pole'},{id:'tw_rigging_box',name:'Κουτί κρεμαστικών TW'},
+  {cat:'🔊 Ήχος', id:'sound', subs:[
+    {sub:'Console', items:[
+      {id:'behringer_wing',name:'Behringer Wing'},{id:'midas_m32',name:'Midas M32'},
+      {id:'midas_m32r',name:'Midas M32R'},{id:'xair_x18',name:'XAir X18'},
+      {id:'soundcraft_mfxi',name:'Soundcraft MFXi'},
+    ]},
+    {sub:'Stagebox', items:[
+      {id:'midas_dl231',name:'Midas DL231'},
+      {id:'behringer_dl32_a',name:'Behringer DL32 (1)'},{id:'behringer_dl32_b',name:'Behringer DL32 (2)'},
+    ]},
+    {sub:'Speakers', items:[
+      {id:'tw_t24n_60',name:'TW Audio T24 60°'},{id:'tw_t24n_90',name:'TW Audio T24 90°'},
+      {id:'tw_b30',name:'TW Audio B30'},{id:'tw_b21',name:'TW Audio B21'},
+      {id:'fbt_sub18',name:'FBT SUB 18"'},{id:'fbt_mon15',name:'FBT MON 15"'},
+      {id:'fbt_mon12',name:'FBT MON 12"'},{id:'turbosound12',name:'Turbosound 12"'},
+      {id:'ev_zlx15',name:'EV ZLX 15"'},{id:'ev_zlx12',name:'EV ZLX 12"'},
+      {id:'bose_s1',name:'Bose S1'},{id:'ev_1212',name:'EV 1212'},{id:'jh212',name:'JH212'},
+      {id:'pole',name:'Pole'},{id:'tw_rigging_box',name:'Κουτί κρεμαστικών TW'},
+    ]},
+    {sub:'Amplifiers', items:[
+      {id:'ampl_k3',name:'AMPL K3'},{id:'ampl_x4',name:'AMPL X4'},
+      {id:'lab_gruppen_3200',name:'LAB Gruppen 3200'},
+    ]},
   ]},
-  {cat:'🎸 Backline',items:[
-    {id:'fender_amp',name:'Fender Amp'},{id:'bugera_amp',name:'Bugera Amp'},
-    {id:'bassman_amp',name:'Bassman Amp'},{id:'nord_piano5',name:'Nord Piano 5'},
-    {id:'korg_kronos',name:'Korg Kronos'},{id:'drum_set',name:'Σετ τύμπανων'},
-    {id:'drum_carpet',name:'Χαλί τύμπανων'},{id:'drum_stool',name:'Σκαμπό τύμπανων'},
-    {id:'p16',name:'P16'},
+  {cat:'🎸 Backline', id:'backline', subs:[
+    {sub:'Ενισχυτές', items:[
+      {id:'fender_amp',name:'Fender Amp'},{id:'bugera_amp',name:'Bugera Amp'},
+      {id:'bassman_amp',name:'Bassman Amp'},
+    ]},
+    {sub:'Keyboards', items:[
+      {id:'nord_piano5',name:'Nord Piano 5'},{id:'korg_kronos',name:'Korg Kronos'},
+    ]},
+    {sub:'Drums', items:[
+      {id:'drum_set',name:'Σετ τύμπανων'},{id:'drum_carpet',name:'Χαλί τύμπανων'},
+      {id:'drum_stool',name:'Σκαμπό τύμπανων'},
+    ]},
+    {sub:'IEM', items:[{id:'p16',name:'P16'}]},
   ]},
-  {cat:'🔌 Καλώδια',items:[
-    {id:'xlr_1m',name:'XLR 1m'},{id:'xlr_2m',name:'XLR 2m'},{id:'xlr_3m',name:'XLR 3m'},
-    {id:'xlr_75m',name:'XLR 7.5m'},{id:'xlr_10m',name:'XLR 10m'},{id:'xlr_15m',name:'XLR 15m'},
-    {id:'xlr_20m',name:'XLR 20m'},{id:'jack_3m',name:'Jack/Jack 3m'},{id:'jack_5m',name:'Jack/Jack 5m'},
-    {id:'minijack_jack',name:'Mini Jack to Jack'},{id:'minijack_rca',name:'Mini Jack to RCA'},
-    {id:'return',name:'Επιστροφές'},{id:'speakon',name:'Speakon NL2'},{id:'speakon_nl4',name:'Speakon NL4'},
-    {id:'thrucon',name:'Thrucon'},{id:'thrucon_bridge',name:'Thrucon Γέφυρα'},
-    {id:'powercon',name:'PowerCon'},{id:'powercon_bridge',name:'PowerCon Γέφυρα'},
-    {id:'eurodyn',name:'Eurodyn'},{id:'hdmi',name:'HDMI'},
-    {id:'eth_50m',name:'Καρούλι Ethernet 50m'},{id:'eth_20m',name:'Καρούλι Ethernet 20m'},
-    {id:'eth_10m',name:'Καρούλι Ethernet 10m'},
+  {cat:'🔌 Καλώδια', id:'cables', subs:[
+    {sub:'XLR', items:[
+      {id:'xlr_1m',name:'XLR 1m'},{id:'xlr_2m',name:'XLR 2m'},{id:'xlr_3m',name:'XLR 3m'},
+      {id:'xlr_75m',name:'XLR 7.5m'},{id:'xlr_10m',name:'XLR 10m'},{id:'xlr_15m',name:'XLR 15m'},
+      {id:'xlr_20m',name:'XLR 20m'},{id:'return',name:'Επιστροφές'},
+    ]},
+    {sub:'Jack', items:[
+      {id:'jack_3m',name:'Jack/Jack 3m'},{id:'jack_5m',name:'Jack/Jack 5m'},
+      {id:'minijack_jack',name:'Mini Jack to Jack'},{id:'minijack_rca',name:'Mini Jack to RCA'},
+    ]},
+    {sub:'Speakon', items:[
+      {id:'speakon',name:'Speakon NL2'},{id:'speakon_nl4',name:'Speakon NL4'},
+      {id:'thrucon',name:'Thrucon'},{id:'thrucon_bridge',name:'Thrucon Γέφυρα'},
+    ]},
+    {sub:'Power', items:[
+      {id:'powercon',name:'PowerCon'},{id:'powercon_bridge',name:'PowerCon Γέφυρα'},
+      {id:'eurodyn',name:'Eurodyn'},{id:'hdmi',name:'HDMI'},
+    ]},
+    {sub:'Ethernet', items:[
+      {id:'eth_50m',name:'Καρούλι Ethernet 50m'},{id:'eth_20m',name:'Καρούλι Ethernet 20m'},
+      {id:'eth_10m',name:'Καρούλι Ethernet 10m'},
+    ]},
   ]},
-  {cat:'⚡ Παροχές',items:[
-    {id:'rack_63a',name:'63A Rack'},{id:'box_62a',name:'62A Box'},{id:'box_16a',name:'16A Box'},
-    {id:'cables_16a',name:'16A Cables'},{id:'polyprizoΓ',name:'Πολύπριζο'},{id:'extension',name:'Προέκταση'},
+  {cat:'⚡ Παροχές', id:'power', subs:[
+    {sub:'16A', items:[{id:'box_16a',name:'16A Box'},{id:'cables_16a',name:'16A Cables'}]},
+    {sub:'63A', items:[{id:'rack_63a',name:'63A Rack'},{id:'box_62a',name:'62A Box'}]},
+    {sub:'Γενική', items:[{id:'polyprizoΓ',name:'Πολύπριζο'},{id:'extension',name:'Προέκταση'}]},
   ]},
-  {cat:'🎤 Stands',items:[
-    {id:'speaker_stand',name:'Speaker Stand'},{id:'mic_stand',name:'Mic Stand'},
-    {id:'music_stand',name:'Music Stand'},{id:'instrument_stand',name:'Instrument Stand'},
-    {id:'lamp_stand',name:'Λαμπάκια stand'},
+  {cat:'🎤 Stands', id:'stands', subs:[
+    {sub:'Stands', items:[
+      {id:'speaker_stand',name:'Speaker Stand'},{id:'mic_stand',name:'Mic Stand'},
+      {id:'music_stand',name:'Music Stand'},{id:'instrument_stand',name:'Instrument Stand'},
+      {id:'lamp_stand',name:'Λαμπάκια stand'},
+    ]},
   ]},
-  {cat:'💡 Φώτα',items:[{id:'light_mixer',name:'Light Mixer'},{id:'light_box',name:'Light Box'}]},
-  {cat:'📹 AV',items:[
-    {id:'dell_1',name:'Dell 1'},{id:'dell_2',name:'Dell 2'},{id:'dell_3',name:'Dell 3'},
-    {id:'dell_4',name:'Dell 4'},{id:'dell_5',name:'Dell 5'},
-    {id:'macbook_hra',name:'MacBook ΗΡΑ'},{id:'macbook_fotis',name:'MacBook Φώτης'},
-    {id:'macbook_sotos',name:'MacBook Σώτος'},{id:'studio_mac',name:'Studio Mac'},
-    {id:'epson_4500_a',name:'Epson 4500 (1)'},{id:'epson_4500_b',name:'Epson 4500 (2)'},
-    {id:'epson_6500',name:'Epson 6500'},{id:'remote_epson',name:'Τηλεχειριστήριο Epson'},
-    {id:'battery_aa',name:'Μπαταρίες AA'},{id:'battery_aaa',name:'Μπαταρίες AAA'},
-    {id:'tv',name:'TV'},{id:'video_mixer',name:'Video Mixer'},{id:'converter',name:'Converter'},
+  {cat:'💡 Φώτα', id:'lights', subs:[
+    {sub:'Φώτα', items:[{id:'light_mixer',name:'Light Mixer'},{id:'light_box',name:'Light Box'}]},
   ]},
-  {cat:'🏗 Truss',items:[{id:'truss_tower',name:'Πύργος'},{id:'truss_jinia',name:'Τζίνια'}]},
+  {cat:'📹 AV', id:'av', subs:[
+    {sub:'Laptops', items:[
+      {id:'dell_1',name:'Dell 1'},{id:'dell_2',name:'Dell 2'},{id:'dell_3',name:'Dell 3'},
+      {id:'dell_4',name:'Dell 4'},{id:'dell_5',name:'Dell 5'},
+      {id:'macbook_hra',name:'MacBook ΗΡΑ'},{id:'macbook_fotis',name:'MacBook Φώτης'},
+      {id:'macbook_sotos',name:'MacBook Σώτος'},{id:'studio_mac',name:'Studio Mac'},
+    ]},
+    {sub:'Projectors', items:[
+      {id:'epson_4500_a',name:'Epson 4500 (1)'},{id:'epson_4500_b',name:'Epson 4500 (2)'},
+      {id:'epson_6500',name:'Epson 6500'},{id:'remote_epson',name:'Τηλεχειριστήριο Epson'},
+    ]},
+    {sub:'Video', items:[
+      {id:'tv',name:'TV'},{id:'video_mixer',name:'Video Mixer'},{id:'converter',name:'Converter'},
+    ]},
+    {sub:'Αναλώσιμα', items:[
+      {id:'battery_aa',name:'Μπαταρίες AA'},{id:'battery_aaa',name:'Μπαταρίες AAA'},
+    ]},
+  ]},
+  {cat:'🏗 Truss', id:'truss', subs:[
+    {sub:'Truss', items:[{id:'truss_tower',name:'Πύργος'},{id:'truss_jinia',name:'Τζίνια'}]},
+  ]},
 ];
 
 var warehouseStock={};
@@ -2394,62 +2438,80 @@ async function loadWarehouseStock(){
     });
     var data2=await r2.json();
 
-    // Mapping cat_id (warehouse) → cat label (PACK_CATALOG)
+    // Mapping cat_id (warehouse) → cat label
     var CAT_ID_TO_LABEL={
       'sound':'🔊 Ήχος','backline':'🎸 Backline','cables':'🔌 Καλώδια',
       'power':'⚡ Παροχές','stands':'🎤 Stands','lights':'💡 Φώτα',
       'av':'📹 AV','truss':'🏗 Truss'
     };
 
-    // Χτίσε δυναμικό κατάλογο συνδυάζοντας PACK_CATALOG + inventory_items
+    // dynamicMap: {catLabel: {subName: [items]}}
     var dynamicMap={};
-    // Πρώτα βάλε όλα από PACK_CATALOG
-    PACK_CATALOG.forEach(function(cat){
-      if(!dynamicMap[cat.cat]) dynamicMap[cat.cat]=[];
-      cat.items.forEach(function(item){
-        dynamicMap[cat.cat].push({id:item.id,name:item.name});
-      });
-    });
 
-    // Mapping από cat_id → cat label (για αντιστοίχιση νέων items)
-    var catIdToLabel={};
-    PACK_CATALOG.forEach(function(cat){
-      // Βγάλε το cat_id από το πρώτο item του catalog (π.χ. 'sound' από 'tw_t24n_60')
-      // Χρησιμοποιούμε το cat label ως fallback key
-      catIdToLabel[cat.cat]=cat.cat;
-    });
-    // Χτίσε και αντίστροφο mapping από prefix του id → cat label
-    var idPrefixToCat={};
-    PACK_CATALOG.forEach(function(cat){
-      cat.items.forEach(function(item){
-        // Δεν χρειάζεται prefix — θα χρησιμοποιήσουμε το sub_name από inventory_items
+    // Βοηθητικές functions
+    function ensureCatSub(catLabel, subName){
+      if(!dynamicMap[catLabel]) dynamicMap[catLabel]={};
+      if(!dynamicMap[catLabel][subName]) dynamicMap[catLabel][subName]=[];
+    }
+    function itemExistsAnywhere(id){
+      var found=false;
+      Object.keys(dynamicMap).forEach(function(c){
+        Object.keys(dynamicMap[c]).forEach(function(s){
+          if(dynamicMap[c][s].find(function(i){return i.id===id;})) found=true;
+        });
       });
-    });
+      return found;
+    }
 
-    // Μετά πρόσθεσε νέα από inventory_items που δεν υπάρχουν ήδη
+    // Φόρτωση από inventory_items (έχουν cat_id + sub_name)
     if(Array.isArray(data2)){
       data2.forEach(function(row){
         if(!row.name||!row.id) return;
-        // Βρες αν υπάρχει ήδη στο dynamicMap
-        var exists=false;
-        Object.keys(dynamicMap).forEach(function(k){
-          if(dynamicMap[k].find(function(i){return i.id===row.id;})) exists=true;
-        });
-        if(exists) return;
-        // Βρες το σωστό cat label
         var catLabel=CAT_ID_TO_LABEL[row.cat_id]||row.cat_id||'➕ Νέα';
-        if(!dynamicMap[catLabel]) dynamicMap[catLabel]=[];
-        dynamicMap[catLabel].push({id:row.id,name:row.name});
+        var subName=row.sub_name||'';
+        ensureCatSub(catLabel,subName);
+        if(!itemExistsAnywhere(row.id)){
+          dynamicMap[catLabel][subName].push({id:row.id,name:row.name});
+        }
       });
     }
 
-    // Μετατροπή σε array
-    dynamicCatalog=Object.keys(dynamicMap).map(function(k){
-      return {cat:k,items:dynamicMap[k]};
+    // Πρόσθεσε items από PACK_CATALOG που δεν υπάρχουν στο inventory_items
+    PACK_CATALOG.forEach(function(cat){
+      if(!dynamicMap[cat.cat]) dynamicMap[cat.cat]={};
+      var subsrc=cat.subs||[{sub:'',items:cat.items||[]}];
+      subsrc.forEach(function(subObj){
+        subObj.items.forEach(function(item){
+          if(!itemExistsAnywhere(item.id)){
+            ensureCatSub(cat.cat,subObj.sub);
+            dynamicMap[cat.cat][subObj.sub].push({id:item.id,name:item.name});
+          }
+        });
+      });
+    });
+
+    // Μετατροπή σε array με υποκατηγορίες
+    // Format: [{cat, subs:[{sub, items:[]}]}]
+    dynamicCatalog=Object.keys(dynamicMap).map(function(catLabel){
+      var subs=Object.keys(dynamicMap[catLabel]).map(function(subName){
+        return {sub:subName, items:dynamicMap[catLabel][subName]};
+      });
+      return {cat:catLabel, subs:subs};
     });
 
     console.log('Warehouse loaded:', Object.keys(warehouseStock).length, 'items,', dynamicCatalog.length, 'categories');
   }catch(e){console.log('loadWarehouseStock error:',e);}
+}
+
+
+// Helper: επίπεδη λίστα items από κατηγορία (υποστηρίζει subs ή items)
+function getCatItems(cat){
+  if(cat.subs){
+    var all=[];
+    cat.subs.forEach(function(s){s.items.forEach(function(i){all.push(i);});});
+    return all;
+  }
+  return cat.items||[];
 }
 
 async function openPackingList(ev, openCatalog){
@@ -2467,7 +2529,7 @@ async function openPackingList(ev, openCatalog){
   var packState={};
   // Αρχικοποίηση packState από existing
   catalogToUse.forEach(function(cat){
-    cat.items.forEach(function(item){packState[item.id]=existing[item.id]||0;});
+    getCatItems(cat).forEach(function(item){packState[item.id]=existing[item.id]||0;});
   });
 
   var overlay=document.createElement('div');
@@ -2501,7 +2563,7 @@ async function openPackingList(ev, openCatalog){
     summarySection.innerHTML='';
     var selItems=[];
     catalogToUse.forEach(function(cat){
-      cat.items.forEach(function(item){
+      getCatItems(cat).forEach(function(item){
         if((packState[item.id]||0)>0) selItems.push({name:item.name,id:item.id,qty:packState[item.id]});
       });
     });
@@ -2556,7 +2618,22 @@ async function openPackingList(ev, openCatalog){
       catHdr.textContent=cat.cat;
       catalogSection.appendChild(catHdr);
 
-      cat.items.forEach(function(item){
+      // Αν έχει υποκατηγορίες, εμφάνισέ τες
+      var subsToRender=[];
+      if(cat.subs){
+        cat.subs.forEach(function(s){if(s.items.length>0) subsToRender.push(s);});
+      } else {
+        subsToRender=[{sub:'',items:cat.items||[]}];
+      }
+
+      subsToRender.forEach(function(subObj){
+        if(subObj.sub){
+          var subHdr=document.createElement('div');
+          subHdr.style.cssText='font-size:10px;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:.06em;margin:10px 0 5px 4px;font-family:"DM Mono",monospace';
+          subHdr.textContent='— '+subObj.sub;
+          catalogSection.appendChild(subHdr);
+        }
+        subObj.items.forEach(function(item){
         var stock=warehouseStock[item.id]||0;
         var curQty=packState[item.id]||0;
 
@@ -2645,7 +2722,8 @@ async function openPackingList(ev, openCatalog){
         row.appendChild(name);row.appendChild(stockBadge);row.appendChild(qtyWrap);row.appendChild(warn);
         catalogSection.appendChild(row);
         catalogSection.appendChild(depWarn);
-      });
+        });// end subObj.items
+      });// end subsToRender
     });
 
     body.appendChild(catalogSection);
@@ -2858,11 +2936,7 @@ async function returnItems(evId,items,notReturned){
       });
       alert('✅ Καταχωρήθηκε! '+Object.keys(notReturned).length+' αντικείμενα παραμένουν εκτός αποθήκης.');
     } else {
-      // Όλα επέστρεψαν — άδειασμα packing list
-      await fetch(SB_URL+'/rest/v1/packing_lists?event_id=eq.'+encodeURIComponent(evId),{
-        method:'DELETE',
-        headers:{'apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY,'Prefer':'return=minimal'}
-      });
+      // Όλα επέστρεψαν — κρατάμε το packing list ως ιστορικό (δεν διαγράφουμε)
       alert('✅ Όλος ο εξοπλισμός επέστρεψε στην αποθήκη!');
     }
   }catch(e){alert('Σφάλμα κατά την αποθήκευση.');}
@@ -2956,7 +3030,7 @@ function showMissingEquipment(){
       // Βρες το όνομα
       var itemName=item.item_id;
       PACK_CATALOG.forEach(function(cat){
-        cat.items.forEach(function(i){if(i.id===item.item_id)itemName=i.name;});
+        getCatItems(cat).forEach(function(i){if(i.id===item.item_id)itemName=i.name;});
       });
 
       itemRow.innerHTML='<span style="color:#dc2626">⚠️</span> '+itemName+' <span style="color:#dc2626;font-weight:700;font-family:DM Mono,monospace">×'+item.qty+'</span>';
@@ -3010,7 +3084,7 @@ function printPackingList(ev,packState){
   var total=0;
   var catalogForPrint=dynamicCatalog.length>0?dynamicCatalog:PACK_CATALOG;
   catalogForPrint.forEach(function(cat){
-    var catItems=cat.items.filter(function(item){return packState[item.id]>0;});
+    var catItems=getCatItems(cat).filter(function(item){return packState[item.id]>0;});
     if(catItems.length===0) return;
     html+='<div class="cat">'+cat.cat+'</div>';
     catItems.forEach(function(item){
