@@ -356,23 +356,36 @@ async function loadInventory(){
     if(Array.isArray(data2)){
       data2.forEach(row => {
         itemOverrides[row.id] = {name:row.name, cat_id:row.cat_id, sub_name:row.sub_name};
-        // Εφάρμοσε override στο CATALOG
+        // Βρες αν υπάρχει ήδη στο CATALOG
+        let foundItem = null;
+        let foundCat = null;
+        let foundSub = null;
         CATALOG.forEach(cat => {
           cat.items.forEach(sub => {
             const item = sub.items.find(i => i.id === row.id);
-            if(item){
-              item.name = row.name;
-              // Μετακίνηση αν έχει αλλάξει κατηγορία
-              if(row.cat_id && row.sub_name && (cat.id !== row.cat_id || sub.sub !== row.sub_name)){
-                const idx = sub.items.indexOf(item);
-                if(idx !== -1) sub.items.splice(idx,1);
-                const newCat = CATALOG.find(c => c.id === row.cat_id);
-                const newSub = newCat ? newCat.items.find(s => s.sub === row.sub_name) : null;
-                if(newSub && !newSub.items.find(i => i.id === row.id)) newSub.items.push(item);
-              }
-            }
+            if(item){ foundItem=item; foundCat=cat; foundSub=sub; }
           });
         });
+        if(foundItem){
+          // Υπάρχει — ενημέρωσε όνομα ή μετακίνησε κατηγορία
+          foundItem.name = row.name;
+          if(row.cat_id && row.sub_name && (foundCat.id !== row.cat_id || foundSub.sub !== row.sub_name)){
+            const idx = foundSub.items.indexOf(foundItem);
+            if(idx !== -1) foundSub.items.splice(idx,1);
+            const newCat = CATALOG.find(c => c.id === row.cat_id);
+            const newSub = newCat ? newCat.items.find(s => s.sub === row.sub_name) : null;
+            if(newSub && !newSub.items.find(i => i.id === row.id)) newSub.items.push(foundItem);
+          }
+        } else {
+          // ΝΕΟ item — δεν υπάρχει στο CATALOG, πρόσθεσέ το
+          if(row.cat_id && row.sub_name){
+            const targetCat = CATALOG.find(c => c.id === row.cat_id);
+            const targetSub = targetCat ? targetCat.items.find(s => s.sub === row.sub_name) : null;
+            if(targetSub && !targetSub.items.find(i => i.id === row.id)){
+              targetSub.items.push({id:row.id, name:row.name, qty:0});
+            }
+          }
+        }
       });
     }
   }catch(e){ console.log('Load items error:', e); }
