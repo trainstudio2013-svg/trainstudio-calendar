@@ -2430,7 +2430,6 @@ async function loadWarehouseStock(){
 
 async function openPackingList(ev){
   await loadWarehouseStock();
-  // Φόρτωση υπάρχοντος packing list
   var existing={};
   try{
     var r=await fetch(SB_URL+'/rest/v1/packing_lists?event_id=eq.'+encodeURIComponent(ev.id)+'&select=item_id,qty',{
@@ -2440,7 +2439,13 @@ async function openPackingList(ev){
     if(Array.isArray(data)) data.forEach(function(row){existing[row.item_id]=row.qty;});
   }catch(e){}
 
-  // Φτιάξε modal
+  var catalogToUse=dynamicCatalog.length>0?dynamicCatalog:PACK_CATALOG;
+  var packState={};
+  // Αρχικοποίηση packState από existing
+  catalogToUse.forEach(function(cat){
+    cat.items.forEach(function(item){packState[item.id]=existing[item.id]||0;});
+  });
+
   var overlay=document.createElement('div');
   overlay.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:300;display:flex;align-items:flex-start;justify-content:center;padding:20px;overflow-y:auto';
 
@@ -2460,42 +2465,88 @@ async function openPackingList(ev){
   hdr.appendChild(htitle);hdr.appendChild(closeBtn);
   box.appendChild(hdr);
 
-  // Body
+  // Body — κύρια περιοχή
   var body=document.createElement('div');
   body.style.cssText='padding:16px 20px;max-height:70vh;overflow-y:auto';
 
-  var packState={};
-  var catalogToUse=dynamicCatalog.length>0?dynamicCatalog:PACK_CATALOG;
-  catalogToUse.forEach(function(cat){
-    var catItems=isAdmin()?cat.items:cat.items.filter(function(i){return (existing[i.id]||0)>0;});
-    if(catItems.length===0) return;
+  // --- Σύνοψη επιλεγμένων (ορατή σε όλους) ---
+  var summarySection=document.createElement('div');
+  summarySection.id='packSummarySection';
 
-    var catHdr=document.createElement('div');
-    catHdr.style.cssText='font-size:13px;font-weight:800;color:#1e293b;text-transform:uppercase;letter-spacing:.08em;margin:18px 0 10px;font-family:"DM Mono",monospace;text-align:center;background:#f1f5f9;padding:7px;border-radius:8px';
-    catHdr.textContent=cat.cat;
-    body.appendChild(catHdr);
+  function buildSummary(){
+    summarySection.innerHTML='';
+    var selItems=[];
+    catalogToUse.forEach(function(cat){
+      cat.items.forEach(function(item){
+        if((packState[item.id]||0)>0) selItems.push({name:item.name,id:item.id,qty:packState[item.id]});
+      });
+    });
+    if(selItems.length===0){
+      var empty=document.createElement('div');
+      empty.style.cssText='text-align:center;color:#94a3b8;font-size:13px;padding:20px 0';
+      empty.textContent='Δεν έχει επιλεγεί εξοπλισμός';
+      summarySection.appendChild(empty);
+      return;
+    }
+    var sumHdr=document.createElement('div');
+    sumHdr.style.cssText='font-size:13px;font-weight:800;color:#2563eb;text-transform:uppercase;letter-spacing:.08em;margin:0 0 8px;font-family:"DM Mono",monospace;text-align:center;background:#eff6ff;padding:7px;border-radius:8px;border:1.5px solid #bfdbfe';
+    sumHdr.textContent='✅ Εξοπλισμός εκδήλωσης ('+selItems.length+')';
+    summarySection.appendChild(sumHdr);
+    selItems.forEach(function(si){
+      var r=document.createElement('div');
+      r.style.cssText='display:flex;align-items:center;justify-content:space-between;padding:7px 10px;background:#eff6ff;border-radius:7px;margin-bottom:4px;border:1px solid #bfdbfe';
+      var n=document.createElement('div');
+      n.style.cssText='font-size:13px;font-weight:600;color:#1e293b';
+      n.textContent=si.name;
+      var q=document.createElement('div');
+      q.style.cssText='font-size:13px;font-weight:700;color:#2563eb;font-family:"DM Mono",monospace';
+      q.textContent='×'+si.qty;
+      r.appendChild(n);r.appendChild(q);
+      summarySection.appendChild(r);
+    });
+  }
 
-    catItems.forEach(function(item){
-      var stock=warehouseStock[item.id]||0;
-      var curQty=existing[item.id]||0;
-      packState[item.id]=curQty;
+  buildSummary();
+  body.appendChild(summarySection);
 
-      var row=document.createElement('div');
-      row.style.cssText='display:flex;align-items:center;gap:10px;padding:7px 0;border-bottom:1px solid #f8fafc';
+  // --- Admin: κουμπί επεξεργασίας + κατάλογος ---
+  var catalogSection=null;
+  if(isAdmin()){
+    var editBtn=document.createElement('button');
+    editBtn.textContent='➕ Επεξεργασία εξοπλισμού';
+    editBtn.style.cssText='width:100%;margin-top:12px;padding:10px;background:#f8fafc;color:#2563eb;border:1.5px dashed #93c5fd;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;font-family:"DM Sans",sans-serif';
+    body.appendChild(editBtn);
 
-      var name=document.createElement('div');
-      name.style.cssText='flex:1;font-size:13px;color:#1e293b;font-weight:'+(curQty>0?'600':'400');
-      name.textContent=item.name;
+    catalogSection=document.createElement('div');
+    catalogSection.style.display='none';
+    catalogSection.style.marginTop='12px';
 
-      var stockBadge=document.createElement('div');
-      stockBadge.style.cssText='font-size:10px;color:'+(stock===0?'#ef4444':stock<=2?'#f59e0b':'#64748b')+';white-space:nowrap;font-family:"DM Mono",monospace';
-      stockBadge.textContent='Διαθ: '+stock;
+    var catDivider=document.createElement('div');
+    catDivider.style.cssText='border-top:2px dashed #e2e8f0;margin-bottom:10px';
+    catalogSection.appendChild(catDivider);
 
-      row.appendChild(name);
-      row.appendChild(stockBadge);
+    // Κτίσε κατάλογο
+    catalogToUse.forEach(function(cat){
+      var catHdr=document.createElement('div');
+      catHdr.style.cssText='font-size:12px;font-weight:800;color:#1e293b;text-transform:uppercase;letter-spacing:.08em;margin:14px 0 8px;font-family:"DM Mono",monospace;text-align:center;background:#f1f5f9;padding:6px;border-radius:7px';
+      catHdr.textContent=cat.cat;
+      catalogSection.appendChild(catHdr);
 
-      if(isAdmin()){
-        // Admin: +/− controls
+      cat.items.forEach(function(item){
+        var stock=warehouseStock[item.id]||0;
+        var curQty=packState[item.id]||0;
+
+        var row=document.createElement('div');
+        row.style.cssText='display:flex;align-items:center;gap:10px;padding:6px 8px;border-radius:7px;margin-bottom:2px;'+(curQty>0?'background:#eff6ff;border:1.5px solid #bfdbfe;':'border-bottom:1px solid #f8fafc;');
+
+        var name=document.createElement('div');
+        name.style.cssText='flex:1;font-size:13px;color:#1e293b;font-weight:'+(curQty>0?'600':'400');
+        name.textContent=item.name;
+
+        var stockBadge=document.createElement('div');
+        stockBadge.style.cssText='font-size:10px;color:'+(stock===0?'#ef4444':stock<=2?'#f59e0b':'#64748b')+';white-space:nowrap;font-family:"DM Mono",monospace';
+        stockBadge.textContent='Διαθ: '+stock;
+
         var qtyWrap=document.createElement('div');
         qtyWrap.style.cssText='display:flex;align-items:center;gap:5px';
 
@@ -2518,91 +2569,90 @@ async function openPackingList(ev){
         var depWarn=document.createElement('div');
         depWarn.style.cssText='font-size:10px;color:#d97706;display:none;margin-top:3px;background:#fef9c3;padding:3px 6px;border-radius:5px;border:1px solid #fde047';
 
-        function updateDisplay(newQty){
-          if(stock>0&&newQty>stock){warn.style.display='inline';warn.title='Έχεις μόνο '+stock+' στην αποθήκη';newQty=stock;}
-          else{warn.style.display='none';}
-          packState[item.id]=newQty;
-          num.textContent=newQty;
-          num.style.color=newQty>0?'#2563eb':'#94a3b8';
-          name.style.fontWeight=newQty>0?'600':'400';
-          btnP.disabled=(stock>0&&newQty>=stock);
-          btnP.style.opacity=(stock>0&&newQty>=stock)?'0.3':'1';
-          // Έλεγχος εξαρτήσεων
-          if(newQty>0&&DEPENDENCIES[item.id]){
-            var deps=DEPENDENCIES[item.id];
-            var missing=[];
-            deps.forEach(function(dep){
-              var alts=dep.split('|');
-              var found=alts.some(function(alt){return (packState[alt]||0)>0;});
-              if(!found){
-                var names=alts.map(function(alt){return DEP_NAMES[alt]||alt;});
-                missing.push(names.join(' ή '));
-              }
-            });
-            if(missing.length>0){
-              depWarn.style.display='block';
-              depWarn.textContent='⚠️ Χρειάζεται: '+missing.join(', ');
-            } else {
-              depWarn.style.display='none';
-            }
-          } else {
-            depWarn.style.display='none';
+        (function(itm, rowEl, nameEl, numEl, warnEl, depWarnEl, btnPEl){
+          function updateDisplay(newQty){
+            if(stock>0&&newQty>stock){warnEl.style.display='inline';warnEl.title='Έχεις μόνο '+stock+' στην αποθήκη';newQty=stock;}
+            else{warnEl.style.display='none';}
+            packState[itm.id]=newQty;
+            numEl.textContent=newQty;
+            numEl.style.color=newQty>0?'#2563eb':'#94a3b8';
+            nameEl.style.fontWeight=newQty>0?'600':'400';
+            rowEl.style.cssText='display:flex;align-items:center;gap:10px;padding:6px 8px;border-radius:7px;margin-bottom:2px;'+(newQty>0?'background:#eff6ff;border:1.5px solid #bfdbfe;':'border-bottom:1px solid #f8fafc;');
+            btnPEl.disabled=(stock>0&&newQty>=stock);
+            btnPEl.style.opacity=(stock>0&&newQty>=stock)?'0.3':'1';
+            // Εξαρτήσεις
+            if(newQty>0&&DEPENDENCIES[itm.id]){
+              var deps=DEPENDENCIES[itm.id];
+              var miss=[];
+              deps.forEach(function(dep){
+                var alts=dep.split('|');
+                var found=alts.some(function(alt){return (packState[alt]||0)>0;});
+                if(!found){var names=alts.map(function(alt){return DEP_NAMES[alt]||alt;});miss.push(names.join(' ή '));}
+              });
+              if(miss.length>0){depWarnEl.style.display='block';depWarnEl.textContent='⚠️ Χρειάζεται: '+miss.join(', ');}
+              else{depWarnEl.style.display='none';}
+            }else{depWarnEl.style.display='none';}
+            // Ενημέρωσε σύνοψη
+            buildSummary();
           }
-        }
+          btnM.onclick=function(){updateDisplay(Math.max(0,packState[itm.id]-1));};
+          btnP.onclick=function(){updateDisplay(packState[itm.id]+1);};
+        })(item, row, name, num, warn, depWarn, btnP);
 
-        btnM.onclick=function(){updateDisplay(Math.max(0,packState[item.id]-1));};
-        btnP.onclick=function(){updateDisplay(packState[item.id]+1);};
         if(stock>0&&curQty>=stock){btnP.disabled=true;btnP.style.opacity='0.3';}
 
         qtyWrap.appendChild(btnM);qtyWrap.appendChild(num);qtyWrap.appendChild(btnP);
-        row.appendChild(qtyWrap);
-        row.appendChild(warn);
-        body.appendChild(row);
-        body.appendChild(depWarn);
-      } else {
-        // Non-admin: read-only ποσότητα
-        var qtyBadge=document.createElement('div');
-        qtyBadge.style.cssText='font-size:14px;font-weight:700;color:#2563eb;font-family:"DM Mono",monospace;min-width:30px;text-align:right';
-        qtyBadge.textContent=curQty>0?'×'+curQty:'';
-        row.appendChild(qtyBadge);
-      }
-
-      body.appendChild(row);
+        row.appendChild(name);row.appendChild(stockBadge);row.appendChild(qtyWrap);row.appendChild(warn);
+        catalogSection.appendChild(row);
+        catalogSection.appendChild(depWarn);
+      });
     });
-  });
+
+    body.appendChild(catalogSection);
+
+    var catalogOpen=false;
+    editBtn.onclick=function(){
+      catalogOpen=!catalogOpen;
+      catalogSection.style.display=catalogOpen?'block':'none';
+      editBtn.textContent=catalogOpen?'▲ Κλείσιμο καταλόγου':'➕ Επεξεργασία εξοπλισμού';
+      editBtn.style.background=catalogOpen?'#eff6ff':'#f8fafc';
+    };
+  }
 
   box.appendChild(body);
 
   // Footer
   var footer=document.createElement('div');
-  footer.style.cssText='padding:14px 20px;border-top:1px solid #e2e8f0;display:flex;gap:8px';
+  footer.style.cssText='padding:14px 20px;border-top:1px solid #e2e8f0;display:flex;gap:8px;position:sticky;bottom:0;background:#fff;border-radius:0 0 14px 14px';
 
-  var saveBtn=document.createElement('button');
-  saveBtn.textContent='💾 Αποθήκευση';
-  saveBtn.style.cssText='flex:1;padding:10px;background:#2563eb;color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;font-family:"DM Sans",sans-serif';
-  saveBtn.onclick=async function(){
-    saveBtn.textContent='⏳ Αποθήκευση...';saveBtn.disabled=true;
-    var rows=[];
-    Object.keys(packState).forEach(function(id){
-      if(packState[id]>0) rows.push({event_id:ev.id,item_id:id,qty:packState[id]});
-    });
-    // Διαγραφή παλιών
-    try{
-      await fetch(SB_URL+'/rest/v1/packing_lists?event_id=eq.'+encodeURIComponent(ev.id),{
-        method:'DELETE',
-        headers:{'apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY,'Prefer':'return=minimal'}
+  if(isAdmin()){
+    var saveBtn=document.createElement('button');
+    saveBtn.textContent='💾 Αποθήκευση';
+    saveBtn.style.cssText='flex:1;padding:10px;background:#2563eb;color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;font-family:"DM Sans",sans-serif';
+    saveBtn.onclick=async function(){
+      saveBtn.textContent='⏳ Αποθήκευση...';saveBtn.disabled=true;
+      var rows=[];
+      Object.keys(packState).forEach(function(id){
+        if(packState[id]>0) rows.push({event_id:ev.id,item_id:id,qty:packState[id]});
       });
-      if(rows.length>0){
-        await fetch(SB_URL+'/rest/v1/packing_lists',{
-          method:'POST',
-          headers:{'apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY,'Content-Type':'application/json','Prefer':'return=minimal'},
-          body:JSON.stringify(rows)
+      try{
+        await fetch(SB_URL+'/rest/v1/packing_lists?event_id=eq.'+encodeURIComponent(ev.id),{
+          method:'DELETE',
+          headers:{'apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY,'Prefer':'return=minimal'}
         });
-      }
-      saveBtn.textContent='✅ Αποθηκεύτηκε!';
-      setTimeout(function(){document.body.removeChild(overlay);},800);
-    }catch(e){saveBtn.textContent='💾 Αποθήκευση';saveBtn.disabled=false;}
-  };
+        if(rows.length>0){
+          await fetch(SB_URL+'/rest/v1/packing_lists',{
+            method:'POST',
+            headers:{'apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY,'Content-Type':'application/json','Prefer':'return=minimal'},
+            body:JSON.stringify(rows)
+          });
+        }
+        saveBtn.textContent='✅ Αποθηκεύτηκε!';
+        setTimeout(function(){document.body.removeChild(overlay);},800);
+      }catch(e){saveBtn.textContent='💾 Αποθήκευση';saveBtn.disabled=false;}
+    };
+    footer.appendChild(saveBtn);
+  }
 
   var printBtn=document.createElement('button');
   printBtn.textContent='🖨 Εκτύπωση';
@@ -2610,16 +2660,14 @@ async function openPackingList(ev){
   printBtn.onclick=function(){printPackingList(ev,packState);};
 
   var cancelBtn=document.createElement('button');
-  cancelBtn.textContent='Ακύρωση';
+  cancelBtn.textContent='Κλείσιμο';
   cancelBtn.style.cssText='padding:10px 12px;background:#f1f5f9;color:#475569;border:1px solid #e2e8f0;border-radius:8px;font-size:13px;cursor:pointer;font-family:"DM Sans",sans-serif';
   cancelBtn.onclick=function(){document.body.removeChild(overlay);};
 
-  if(isAdmin()) footer.appendChild(saveBtn);
   footer.appendChild(printBtn);
   footer.appendChild(cancelBtn);
   box.appendChild(footer);
   overlay.appendChild(box);
-  overlay.addEventListener('click',function(e){if(e.target===overlay)document.body.removeChild(overlay);});
   document.body.appendChild(overlay);
 }
 async function openReturnEquipment(ev){
@@ -2839,11 +2887,20 @@ function showMissingEquipment(){
     var evDiv=document.createElement('div');
     evDiv.style.cssText='margin-bottom:16px;padding:12px;background:#f8fafc;border-radius:10px;border:1px solid #e2e8f0';
 
+    var evHeader=document.createElement('div');
+    evHeader.style.cssText='display:flex;align-items:center;justify-content:space-between;margin-bottom:6px';
     var evTitle=document.createElement('div');
-    evTitle.style.cssText='font-size:13px;font-weight:700;color:#1e293b;margin-bottom:6px';
+    evTitle.style.cssText='font-size:13px;font-weight:700;color:#1e293b;cursor:pointer;text-decoration:underline dotted #94a3b8';
     var p=m.ev.date.split('-');
     evTitle.textContent='📅 '+m.ev.title+' — '+parseInt(p[2])+'/'+parseInt(p[1])+'/'+p[0];
-    evDiv.appendChild(evTitle);
+    evTitle.title='Άνοιγμα packing list';
+    evTitle.onclick=(function(ev){return function(){document.body.removeChild(overlay);openPackingList(ev);};})(m.ev);
+    var retBtn=document.createElement('button');
+    retBtn.textContent='↩️ Επιστροφή';
+    retBtn.style.cssText='font-size:11px;padding:4px 8px;background:#fee2e2;color:#dc2626;border:1px solid #fca5a5;border-radius:6px;cursor:pointer;font-weight:700;font-family:"DM Sans",sans-serif;white-space:nowrap';
+    retBtn.onclick=(function(ev){return function(){document.body.removeChild(overlay);openPackingList(ev);};})(m.ev);
+    evHeader.appendChild(evTitle);evHeader.appendChild(retBtn);
+    evDiv.appendChild(evHeader);
 
     m.items.forEach(function(item){
       var itemRow=document.createElement('div');
