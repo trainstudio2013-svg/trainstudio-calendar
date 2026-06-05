@@ -71,6 +71,22 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min
 /* SAVE STATUS */
 .save-status{position:fixed;bottom:20px;right:20px;background:#1e293b;color:#fff;padding:10px 16px;border-radius:10px;font-size:12px;font-weight:600;opacity:0;transition:opacity .3s;pointer-events:none}
 .save-status.show{opacity:1}
+/* Drag & Drop */
+.eq-card{cursor:grab}
+.eq-card.dragging{opacity:.4;cursor:grabbing}
+.eq-card.drag-over{border-color:#2563eb;background:#eff6ff}
+/* Qty input */
+.qty-input{width:48px;height:28px;border:1.5px solid #e2e8f0;border-radius:6px;text-align:center;font-size:14px;font-weight:700;font-family:'DM Mono',monospace;color:#1e293b;outline:none;padding:0}
+.qty-input:focus{border-color:#2563eb}
+/* New subsection */
+.add-sub-row{display:flex;gap:6px;margin-bottom:12px;align-items:center}
+.add-sub-row input{flex:1;padding:6px 10px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:12px;font-family:'DM Sans',sans-serif;outline:none}
+.add-sub-row input:focus{border-color:#2563eb}
+.btn-add-sub{padding:6px 12px;background:#f1f5f9;border:1px solid #e2e8f0;border-radius:8px;font-size:12px;cursor:pointer;font-family:'DM Sans',sans-serif;color:#475569;font-weight:500;white-space:nowrap}
+.btn-add-sub:hover{background:#e2e8f0}
+.subsection-title{display:flex;align-items:center;gap:6px}
+.drag-handle{cursor:grab;color:#cbd5e1;font-size:14px;flex-shrink:0;user-select:none}
+.drag-handle:hover{color:#94a3b8}
 .edit-btn{width:28px;height:28px;border-radius:7px;border:1px solid #e2e8f0;background:#f8fafc;color:#94a3b8;font-size:13px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:all .15s;padding:0}
 .edit-btn:hover{border-color:#2563eb;color:#2563eb;background:#eff6ff}
 /* MODAL */
@@ -159,6 +175,10 @@ const CATALOG = [
         {id:'ampl_x4',          name:'AMPL X4',               qty:1},
         {id:'lab_gruppen_3200', name:'LAB Gruppen 3200',      qty:2},
       ]},
+      {sub:'Accessories', items:[
+        {id:'pole',             name:'Pole (κρεμαστικά)',      qty:4},
+        {id:'tw_rigging_box',   name:'Κουτί κρεμαστικών TW',  qty:1},
+      ]},
     ]
   },
   {
@@ -175,6 +195,8 @@ const CATALOG = [
       ]},
       {sub:'Drums', items:[
         {id:'drum_set',         name:'Σετ τύμπανων',          qty:0},
+        {id:'drum_carpet',      name:'Χαλί τύμπανων',         qty:0},
+        {id:'drum_stool',       name:'Σκαμπό τύμπανων',       qty:0},
       ]},
       {sub:'IEM', items:[
         {id:'p16',              name:'P16',                   qty:0},
@@ -193,12 +215,28 @@ const CATALOG = [
         {id:'xlr_20m',  name:'XLR 20m',   qty:0},
       ]},
       {sub:'Jack', items:[
-        {id:'jack_3m',  name:'Jack/Jack 3m',  qty:0},
-        {id:'jack_5m',  name:'Jack/Jack 5m',  qty:0},
+        {id:'jack_3m',        name:'Jack/Jack 3m',       qty:0},
+        {id:'jack_5m',        name:'Jack/Jack 5m',       qty:0},
+        {id:'minijack_jack',  name:'Mini Jack to Jack',  qty:2},
+        {id:'minijack_rca',   name:'Mini Jack to RCA',   qty:2},
       ]},
-      {sub:'Άλλα', items:[
-        {id:'return',   name:'Επιστροφές',    qty:0},
-        {id:'speakon',  name:'Speakon',       qty:0},
+      {sub:'Speakon', items:[
+        {id:'speakon',        name:'Speakon NL2',        qty:0},
+        {id:'speakon_nl4',    name:'Speakon NL4',        qty:0},
+      ]},
+      {sub:'Power', items:[
+        {id:'return',         name:'Επιστροφές',         qty:0},
+        {id:'thrucon',        name:'Thrucon',            qty:0},
+        {id:'thrucon_bridge', name:'Thrucon Γέφυρα',     qty:0},
+        {id:'powercon',       name:'PowerCon',           qty:0},
+        {id:'powercon_bridge',name:'PowerCon Γέφυρα',    qty:0},
+        {id:'eurodyn',        name:'Eurodyn',            qty:0},
+        {id:'hdmi',           name:'HDMI',               qty:0},
+      ]},
+      {sub:'Ethernet', items:[
+        {id:'eth_50m',   name:'Καρούλι Ethernet 50m',   qty:3},
+        {id:'eth_20m',   name:'Καρούλι Ethernet 20m',   qty:3},
+        {id:'eth_10m',   name:'Καρούλι Ethernet 10m',   qty:1},
       ]},
     ]
   },
@@ -253,11 +291,32 @@ const CATALOG = [
   },
   {
     id:'av', label:'📹 AV', items:[
+      {sub:'Laptops', items:[
+        {id:'dell_1',         name:'Dell 1',              qty:1},
+        {id:'dell_2',         name:'Dell 2',              qty:1},
+        {id:'dell_3',         name:'Dell 3',              qty:1},
+        {id:'dell_4',         name:'Dell 4',              qty:1},
+        {id:'dell_5',         name:'Dell 5',              qty:1},
+        {id:'macbook_hra',    name:'MacBook ΗΡΑ',         qty:1},
+        {id:'macbook_fotis',  name:'MacBook Φώτης',       qty:1},
+        {id:'macbook_sotos',  name:'MacBook Σώτος',       qty:1},
+        {id:'studio_mac',     name:'Studio Mac',          qty:1},
+      ]},
+      {sub:'Projectors', items:[
+        {id:'epson_4500_a',   name:'Epson 4500 (1)',      qty:1},
+        {id:'epson_4500_b',   name:'Epson 4500 (2)',      qty:1},
+        {id:'epson_6500',     name:'Epson 6500',          qty:1},
+        {id:'remote_epson',   name:'Τηλεχειριστήριο Epson', qty:3},
+      ]},
       {sub:'Video', items:[
-        {id:'video_mixer',  name:'Video Mixer',   qty:0},
-        {id:'projector',    name:'Projector',     qty:0},
-        {id:'tv',           name:'TV',            qty:0},
-        {id:'converter',    name:'Converter',     qty:0},
+        {id:'video_mixer',    name:'Video Mixer',         qty:0},
+        {id:'tv',             name:'TV',                  qty:0},
+        {id:'converter',      name:'Converter',           qty:0},
+      ]},
+      {sub:'Αναλώσιμα', items:[
+        {id:'battery_aa',     name:'Μπαταρίες AA',        qty:0},
+        {id:'battery_aaa',    name:'Μπαταρίες AAA',       qty:0},
+        {id:'lamp_stand',     name:'Λαμπάκια stand',      qty:0},
       ]},
     ]
   },
@@ -347,6 +406,8 @@ function getQty(id, defaultQty){
   return inventory[id] !== undefined ? inventory[id] : defaultQty;
 }
 
+let dragSrc=null;
+
 function render(){
   // Tabs
   const tabs = document.getElementById('catTabs');
@@ -369,10 +430,15 @@ function render(){
     cat.items.forEach(sub => {
       const subDiv = document.createElement('div');
       subDiv.className = 'subsection';
-      const subTitle = document.createElement('div');
-      subTitle.className = 'subsection-title';
+
+      // Subsection title
+      const subTitleWrap = document.createElement('div');
+      subTitleWrap.className = 'subsection-title';
+      const subTitle = document.createElement('span');
       subTitle.textContent = sub.sub;
-      subDiv.appendChild(subTitle);
+      subTitle.style.cssText='flex:1;font-size:11px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.06em;font-family:"DM Mono",monospace';
+      subTitleWrap.appendChild(subTitle);
+      subDiv.appendChild(subTitleWrap);
 
       const grid = document.createElement('div');
       grid.className = 'eq-grid';
@@ -381,6 +447,42 @@ function render(){
         const qty = getQty(item.id, item.qty);
         const card = document.createElement('div');
         card.className = 'eq-card';
+        card.draggable = true;
+        card.dataset.id = item.id;
+        card.dataset.subId = sub.sub;
+        card.dataset.catId = cat.id;
+
+        // Drag handle
+        const handle = document.createElement('span');
+        handle.className = 'drag-handle';
+        handle.textContent = '⠿';
+        handle.title = 'Σύρε για αλλαγή σειράς';
+
+        // Drag events
+        card.addEventListener('dragstart', e => {
+          dragSrc = {item, sub, cat};
+          card.classList.add('dragging');
+          e.dataTransfer.effectAllowed = 'move';
+        });
+        card.addEventListener('dragend', () => card.classList.remove('dragging'));
+        card.addEventListener('dragover', e => { e.preventDefault(); card.classList.add('drag-over'); });
+        card.addEventListener('dragleave', () => card.classList.remove('drag-over'));
+        card.addEventListener('drop', e => {
+          e.preventDefault();
+          card.classList.remove('drag-over');
+          if(!dragSrc || dragSrc.item.id === item.id) return;
+          // Αλλαγή σειράς μόνο αν είναι στο ίδιο sub
+          if(dragSrc.sub === sub && dragSrc.cat === cat){
+            const srcIdx = sub.items.indexOf(dragSrc.item);
+            const tgtIdx = sub.items.indexOf(item);
+            if(srcIdx !== -1 && tgtIdx !== -1){
+              sub.items.splice(srcIdx, 1);
+              sub.items.splice(tgtIdx, 0, dragSrc.item);
+              render();
+            }
+          }
+          dragSrc = null;
+        });
 
         const status = document.createElement('div');
         status.className = 'eq-status ' + (qty === 0 ? 'zero' : qty <= 2 ? 'low' : 'ok');
@@ -406,9 +508,25 @@ function render(){
           render();
         };
 
-        const num = document.createElement('div');
-        num.className = 'qty-num' + (qty === 0 ? ' zero' : '');
-        num.textContent = qty;
+        // Qty input — απευθείας εισαγωγή αριθμού
+        const qtyInp = document.createElement('input');
+        qtyInp.className = 'qty-input';
+        qtyInp.type = 'number';
+        qtyInp.min = '0';
+        qtyInp.value = qty;
+        qtyInp.addEventListener('change', () => {
+          const newQty = Math.max(0, parseInt(qtyInp.value)||0);
+          inventory[item.id] = newQty;
+          saveItem(item.id, newQty);
+          qtyInp.value = newQty;
+          // Ενημέρωση status
+          status.className = 'eq-status ' + (newQty === 0 ? 'zero' : newQty <= 2 ? 'low' : 'ok');
+        });
+        qtyInp.addEventListener('blur', () => {
+          const newQty = Math.max(0, parseInt(qtyInp.value)||0);
+          inventory[item.id] = newQty;
+          saveItem(item.id, newQty);
+        });
 
         const btnPlus = document.createElement('button');
         btnPlus.className = 'qty-btn';
@@ -417,23 +535,31 @@ function render(){
           const cur = getQty(item.id, item.qty);
           const newQty = cur + 1;
           inventory[item.id] = newQty;
+          qtyInp.value = newQty;
           saveItem(item.id, newQty);
-          render();
+          status.className = 'eq-status ' + (newQty === 0 ? 'zero' : newQty <= 2 ? 'low' : 'ok');
+        };
+
+        btnMinus.onclick = () => {
+          const cur = getQty(item.id, item.qty);
+          const newQty = Math.max(0, cur - 1);
+          inventory[item.id] = newQty;
+          qtyInp.value = newQty;
+          saveItem(item.id, newQty);
+          status.className = 'eq-status ' + (newQty === 0 ? 'zero' : newQty <= 2 ? 'low' : 'ok');
         };
 
         qtyDiv.appendChild(btnMinus);
-        qtyDiv.appendChild(num);
+        qtyDiv.appendChild(qtyInp);
         qtyDiv.appendChild(btnPlus);
 
         const editBtn = document.createElement('button');
         editBtn.className = 'edit-btn';
         editBtn.textContent = '✏️';
         editBtn.title = 'Επεξεργασία';
-        editBtn.onclick = (e) => {
-          e.stopPropagation();
-          openEditModal(item, cat, sub);
-        };
+        editBtn.onclick = (e) => { e.stopPropagation(); openEditModal(item, cat, sub); };
 
+        card.appendChild(handle);
         card.appendChild(status);
         card.appendChild(info);
         card.appendChild(qtyDiv);
@@ -445,27 +571,58 @@ function render(){
       sec.appendChild(subDiv);
     });
 
-    // Add new item button
+    // Νέα υποκατηγορία
+    const addSubRow = document.createElement('div');
+    addSubRow.className = 'add-sub-row';
+    const subInp = document.createElement('input');
+    subInp.placeholder = '+ Νέα υποκατηγορία (π.χ. Μικρόφωνα)...';
+    const addSubBtn = document.createElement('button');
+    addSubBtn.className = 'btn-add-sub';
+    addSubBtn.textContent = '+ Κατηγορία';
+    addSubBtn.onclick = () => {
+      const name = subInp.value.trim();
+      if(!name) return;
+      cat.items.push({sub:name, items:[]});
+      subInp.value = '';
+      render();
+    };
+    addSubRow.appendChild(subInp);
+    addSubRow.appendChild(addSubBtn);
+    sec.appendChild(addSubRow);
+
+    // Νέο αντικείμενο
     const addRow = document.createElement('div');
     addRow.className = 'add-item-row';
     const inp = document.createElement('input');
     inp.placeholder = '+ Νέο αντικείμενο...';
     inp.type = 'text';
+
+    // Επιλογή υποκατηγορίας
+    const subSel = document.createElement('select');
+    subSel.style.cssText='padding:8px 10px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:12px;font-family:"DM Sans",sans-serif;color:#475569;background:#fff;cursor:pointer;outline:none';
+    cat.items.forEach(s => {
+      const opt = document.createElement('option');
+      opt.value = s.sub;
+      opt.textContent = s.sub;
+      subSel.appendChild(opt);
+    });
+
     const addBtn = document.createElement('button');
     addBtn.className = 'btn-add';
     addBtn.textContent = 'Προσθήκη';
     addBtn.onclick = () => {
       const name = inp.value.trim();
       if(!name) return;
-      const id = cat.id + '_custom_' + Date.now();
-      // Add to catalog dynamically
-      cat.items[cat.items.length-1].items.push({id, name, qty:0});
+      const id = cat.id + '_' + name.toLowerCase().replace(/[^a-z0-9]/g,'_') + '_' + Date.now().toString(36);
+      const targetSub = cat.items.find(s => s.sub === subSel.value) || cat.items[cat.items.length-1];
+      targetSub.items.push({id, name, qty:0});
       inventory[id] = 0;
       saveItem(id, 0);
       inp.value = '';
       render();
     };
     addRow.appendChild(inp);
+    addRow.appendChild(subSel);
     addRow.appendChild(addBtn);
     sec.appendChild(addRow);
 

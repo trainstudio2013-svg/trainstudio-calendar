@@ -2273,6 +2273,62 @@ function sendTeamNotification(ev){
 }
 
 /* ══ PACKING LIST ══════════════════════════════════════════ */
+// Εξαρτήσεις εξοπλισμού — τι χρειάζεται μαζί
+var DEPENDENCIES={
+  'tw_t24n_60':  ['ampl_k3|ampl_x4','speakon_nl4','tw_rigging_box','pole'],
+  'tw_t24n_90':  ['ampl_k3|ampl_x4','speakon_nl4','tw_rigging_box','pole'],
+  'tw_b30':      ['ampl_k3|ampl_x4','speakon_nl4','pole'],
+  'tw_b21':      ['ampl_k3|ampl_x4','speakon_nl4','pole'],
+  'fbt_sub18':   ['thrucon','pole'],
+  'fbt_mon15':   ['thrucon'],
+  'fbt_mon12':   ['thrucon'],
+  'turbosound12':['powercon'],
+  'bose_s1':     ['eurodyn'],
+  'ev_zlx15':    ['eurodyn'],
+  'ev_zlx12':    ['eurodyn'],
+  'behringer_wing':['eurodyn'],
+  'midas_m32':   ['eurodyn'],
+  'midas_m32r':  ['eurodyn'],
+  'xair_x18':    ['eurodyn'],
+  'soundcraft_mfxi':['eurodyn'],
+  'midas_dl231': ['eurodyn','eth_50m|eth_20m|eth_10m'],
+  'behringer_dl32_a':['eurodyn','eth_50m|eth_20m|eth_10m'],
+  'behringer_dl32_b':['eurodyn','eth_50m|eth_20m|eth_10m'],
+  'ampl_k3':     ['eurodyn'],
+  'ampl_x4':     ['eurodyn'],
+  'lab_gruppen_3200':['eurodyn'],
+  'nord_piano5': ['eurodyn'],
+  'korg_kronos': ['eurodyn'],
+  'drum_set':    ['drum_carpet','drum_stool'],
+  'music_stand': ['lamp_stand'],
+  'epson_4500_a':['eurodyn','hdmi','remote_epson','battery_aa|battery_aaa'],
+  'epson_4500_b':['eurodyn','hdmi','remote_epson','battery_aa|battery_aaa'],
+  'epson_6500':  ['eurodyn','hdmi','remote_epson','battery_aa|battery_aaa'],
+  'dell_1':      ['minijack_jack|minijack_rca'],
+  'dell_2':      ['minijack_jack|minijack_rca'],
+  'dell_3':      ['minijack_jack|minijack_rca'],
+  'dell_4':      ['minijack_jack|minijack_rca'],
+  'dell_5':      ['minijack_jack|minijack_rca'],
+  'macbook_hra': ['minijack_jack|minijack_rca'],
+  'macbook_fotis':['minijack_jack|minijack_rca'],
+  'macbook_sotos':['minijack_jack|minijack_rca'],
+  'studio_mac':  ['minijack_jack|minijack_rca'],
+};
+
+// Ονόματα για εξαρτήσεις
+var DEP_NAMES={
+  'ampl_k3':'AMPL K3','ampl_x4':'AMPL X4','speakon':'Speakon NL2',
+  'speakon_nl4':'Speakon NL4','thrucon':'Thrucon','thrucon_bridge':'Thrucon Γέφυρα',
+  'powercon':'PowerCon','powercon_bridge':'PowerCon Γέφυρα','eurodyn':'Eurodyn',
+  'hdmi':'HDMI','pole':'Pole','tw_rigging_box':'Κουτί κρεμαστικών TW',
+  'drum_carpet':'Χαλί τύμπανων','drum_stool':'Σκαμπό τύμπανων',
+  'lamp_stand':'Λαμπάκια stand','remote_epson':'Τηλεχειριστήριο Epson',
+  'battery_aa':'Μπαταρίες AA','battery_aaa':'Μπαταρίες AAA',
+  'minijack_jack':'Mini Jack to Jack','minijack_rca':'Mini Jack to RCA',
+  'eth_50m':'Καρούλι Ethernet 50m','eth_20m':'Καρούλι Ethernet 20m',
+  'eth_10m':'Καρούλι Ethernet 10m',
+};
+
 var PACK_CATALOG=[
   {cat:'🔊 Ήχος',items:[
     {id:'tw_t24n_60',name:'TW Audio T24 60°'},{id:'tw_t24n_90',name:'TW Audio T24 90°'},
@@ -2284,18 +2340,28 @@ var PACK_CATALOG=[
     {id:'ampl_k3',name:'AMPL K3'},{id:'ampl_x4',name:'AMPL X4'},{id:'lab_gruppen_3200',name:'LAB Gruppen 3200'},
     {id:'behringer_wing',name:'Behringer Wing'},{id:'midas_m32',name:'Midas M32'},
     {id:'midas_m32r',name:'Midas M32R'},{id:'xair_x18',name:'XAir X18'},
-    {id:'midas_dl231',name:'Midas DL231'},{id:'behringer_dl32_a',name:'Behringer DL32'},
+    {id:'soundcraft_mfxi',name:'Soundcraft MFXi'},{id:'midas_dl231',name:'Midas DL231'},
+    {id:'behringer_dl32_a',name:'Behringer DL32 (1)'},{id:'behringer_dl32_b',name:'Behringer DL32 (2)'},
+    {id:'pole',name:'Pole'},{id:'tw_rigging_box',name:'Κουτί κρεμαστικών TW'},
   ]},
   {cat:'🎸 Backline',items:[
     {id:'fender_amp',name:'Fender Amp'},{id:'bugera_amp',name:'Bugera Amp'},
     {id:'bassman_amp',name:'Bassman Amp'},{id:'nord_piano5',name:'Nord Piano 5'},
-    {id:'korg_kronos',name:'Korg Kronos'},{id:'drum_set',name:'Σετ τύμπανων'},{id:'p16',name:'P16'},
+    {id:'korg_kronos',name:'Korg Kronos'},{id:'drum_set',name:'Σετ τύμπανων'},
+    {id:'drum_carpet',name:'Χαλί τύμπανων'},{id:'drum_stool',name:'Σκαμπό τύμπανων'},
+    {id:'p16',name:'P16'},
   ]},
   {cat:'🔌 Καλώδια',items:[
     {id:'xlr_1m',name:'XLR 1m'},{id:'xlr_2m',name:'XLR 2m'},{id:'xlr_3m',name:'XLR 3m'},
     {id:'xlr_75m',name:'XLR 7.5m'},{id:'xlr_10m',name:'XLR 10m'},{id:'xlr_15m',name:'XLR 15m'},
     {id:'xlr_20m',name:'XLR 20m'},{id:'jack_3m',name:'Jack/Jack 3m'},{id:'jack_5m',name:'Jack/Jack 5m'},
-    {id:'return',name:'Επιστροφές'},{id:'speakon',name:'Speakon'},
+    {id:'minijack_jack',name:'Mini Jack to Jack'},{id:'minijack_rca',name:'Mini Jack to RCA'},
+    {id:'return',name:'Επιστροφές'},{id:'speakon',name:'Speakon NL2'},{id:'speakon_nl4',name:'Speakon NL4'},
+    {id:'thrucon',name:'Thrucon'},{id:'thrucon_bridge',name:'Thrucon Γέφυρα'},
+    {id:'powercon',name:'PowerCon'},{id:'powercon_bridge',name:'PowerCon Γέφυρα'},
+    {id:'eurodyn',name:'Eurodyn'},{id:'hdmi',name:'HDMI'},
+    {id:'eth_50m',name:'Καρούλι Ethernet 50m'},{id:'eth_20m',name:'Καρούλι Ethernet 20m'},
+    {id:'eth_10m',name:'Καρούλι Ethernet 10m'},
   ]},
   {cat:'⚡ Παροχές',items:[
     {id:'rack_63a',name:'63A Rack'},{id:'box_62a',name:'62A Box'},{id:'box_16a',name:'16A Box'},
@@ -2304,27 +2370,72 @@ var PACK_CATALOG=[
   {cat:'🎤 Stands',items:[
     {id:'speaker_stand',name:'Speaker Stand'},{id:'mic_stand',name:'Mic Stand'},
     {id:'music_stand',name:'Music Stand'},{id:'instrument_stand',name:'Instrument Stand'},
+    {id:'lamp_stand',name:'Λαμπάκια stand'},
   ]},
   {cat:'💡 Φώτα',items:[{id:'light_mixer',name:'Light Mixer'},{id:'light_box',name:'Light Box'}]},
-  {cat:'📹 AV',items:[{id:'projector',name:'Projector'},{id:'tv',name:'TV'},{id:'converter',name:'Converter'}]},
+  {cat:'📹 AV',items:[
+    {id:'dell_1',name:'Dell 1'},{id:'dell_2',name:'Dell 2'},{id:'dell_3',name:'Dell 3'},
+    {id:'dell_4',name:'Dell 4'},{id:'dell_5',name:'Dell 5'},
+    {id:'macbook_hra',name:'MacBook ΗΡΑ'},{id:'macbook_fotis',name:'MacBook Φώτης'},
+    {id:'macbook_sotos',name:'MacBook Σώτος'},{id:'studio_mac',name:'Studio Mac'},
+    {id:'epson_4500_a',name:'Epson 4500 (1)'},{id:'epson_4500_b',name:'Epson 4500 (2)'},
+    {id:'epson_6500',name:'Epson 6500'},{id:'remote_epson',name:'Τηλεχειριστήριο Epson'},
+    {id:'battery_aa',name:'Μπαταρίες AA'},{id:'battery_aaa',name:'Μπαταρίες AAA'},
+    {id:'tv',name:'TV'},{id:'video_mixer',name:'Video Mixer'},{id:'converter',name:'Converter'},
+  ]},
   {cat:'🏗 Truss',items:[{id:'truss_tower',name:'Πύργος'},{id:'truss_jinia',name:'Τζίνια'}]},
 ];
 
 var warehouseStock={};
 
+var dynamicCatalog=[]; // Δυναμικός κατάλογος από Supabase
+
 async function loadWarehouseStock(){
   try{
+    // Φόρτωση ποσοτήτων
     var r=await fetch(SB_URL+'/rest/v1/inventory?select=id,qty&limit=1000',{
-      headers:{
-        'apikey':SB_KEY,
-        'Authorization':'Bearer '+SB_KEY,
-        'Range-Unit':'items',
-        'Prefer':'count=none'
-      }
+      headers:{'apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY,'Prefer':'count=none'}
     });
     var data=await r.json();
     if(Array.isArray(data)) data.forEach(function(row){warehouseStock[row.id]=row.qty;});
-    console.log('Warehouse stock loaded:', Object.keys(warehouseStock).length, 'items');
+
+    // Φόρτωση ονομάτων/κατηγοριών από inventory_items
+    var r2=await fetch(SB_URL+'/rest/v1/inventory_items?select=id,name,cat_id,sub_name&limit=1000',{
+      headers:{'apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY,'Prefer':'count=none'}
+    });
+    var data2=await r2.json();
+
+    // Χτίσε δυναμικό κατάλογο συνδυάζοντας PACK_CATALOG + inventory_items
+    var dynamicMap={};
+    // Πρώτα βάλε όλα από PACK_CATALOG
+    PACK_CATALOG.forEach(function(cat){
+      if(!dynamicMap[cat.cat]) dynamicMap[cat.cat]=[];
+      cat.items.forEach(function(item){
+        dynamicMap[cat.cat].push({id:item.id,name:item.name});
+      });
+    });
+
+    // Μετά πρόσθεσε νέα από inventory_items που δεν υπάρχουν ήδη
+    if(Array.isArray(data2)){
+      data2.forEach(function(row){
+        if(!row.name||!row.id) return;
+        var catKey=row.cat_id||'➕ Νέα';
+        if(!dynamicMap[catKey]) dynamicMap[catKey]=[];
+        // Έλεγξε αν υπάρχει ήδη
+        var exists=false;
+        Object.keys(dynamicMap).forEach(function(k){
+          if(dynamicMap[k].find(function(i){return i.id===row.id;})) exists=true;
+        });
+        if(!exists) dynamicMap[catKey].push({id:row.id,name:row.name});
+      });
+    }
+
+    // Μετατροπή σε array
+    dynamicCatalog=Object.keys(dynamicMap).map(function(k){
+      return {cat:k,items:dynamicMap[k]};
+    });
+
+    console.log('Warehouse loaded:', Object.keys(warehouseStock).length, 'items,', dynamicCatalog.length, 'categories');
   }catch(e){console.log('loadWarehouseStock error:',e);}
 }
 
@@ -2365,7 +2476,8 @@ async function openPackingList(ev){
   body.style.cssText='padding:16px 20px;max-height:70vh;overflow-y:auto';
 
   var packState={};
-  PACK_CATALOG.forEach(function(cat){
+  var catalogToUse=dynamicCatalog.length>0?dynamicCatalog:PACK_CATALOG;
+  catalogToUse.forEach(function(cat){
     var catItems=isAdmin()?cat.items:cat.items.filter(function(i){return (existing[i.id]||0)>0;});
     if(catItems.length===0) return;
 
@@ -2414,6 +2526,9 @@ async function openPackingList(ev){
         warn.style.cssText='font-size:10px;color:#ef4444;display:none';
         warn.textContent='⚠️';
 
+        var depWarn=document.createElement('div');
+        depWarn.style.cssText='font-size:10px;color:#d97706;display:none;margin-top:3px;background:#fef9c3;padding:3px 6px;border-radius:5px;border:1px solid #fde047';
+
         function updateDisplay(newQty){
           if(stock>0&&newQty>stock){warn.style.display='inline';warn.title='Έχεις μόνο '+stock+' στην αποθήκη';newQty=stock;}
           else{warn.style.display='none';}
@@ -2423,6 +2538,27 @@ async function openPackingList(ev){
           name.style.fontWeight=newQty>0?'600':'400';
           btnP.disabled=(stock>0&&newQty>=stock);
           btnP.style.opacity=(stock>0&&newQty>=stock)?'0.3':'1';
+          // Έλεγχος εξαρτήσεων
+          if(newQty>0&&DEPENDENCIES[item.id]){
+            var deps=DEPENDENCIES[item.id];
+            var missing=[];
+            deps.forEach(function(dep){
+              var alts=dep.split('|');
+              var found=alts.some(function(alt){return (packState[alt]||0)>0;});
+              if(!found){
+                var names=alts.map(function(alt){return DEP_NAMES[alt]||alt;});
+                missing.push(names.join(' ή '));
+              }
+            });
+            if(missing.length>0){
+              depWarn.style.display='block';
+              depWarn.textContent='⚠️ Χρειάζεται: '+missing.join(', ');
+            } else {
+              depWarn.style.display='none';
+            }
+          } else {
+            depWarn.style.display='none';
+          }
         }
 
         btnM.onclick=function(){updateDisplay(Math.max(0,packState[item.id]-1));};
@@ -2432,6 +2568,8 @@ async function openPackingList(ev){
         qtyWrap.appendChild(btnM);qtyWrap.appendChild(num);qtyWrap.appendChild(btnP);
         row.appendChild(qtyWrap);
         row.appendChild(warn);
+        body.appendChild(row);
+        body.appendChild(depWarn);
       } else {
         // Non-admin: read-only ποσότητα
         var qtyBadge=document.createElement('div');
@@ -2777,7 +2915,8 @@ function printPackingList(ev,packState){
   html+='<div class="date">'+dateStr+(ev.time?' — '+ev.time:'')+'</div></div>';
 
   var total=0;
-  PACK_CATALOG.forEach(function(cat){
+  var catalogForPrint=dynamicCatalog.length>0?dynamicCatalog:PACK_CATALOG;
+  catalogForPrint.forEach(function(cat){
     var catItems=cat.items.filter(function(item){return packState[item.id]>0;});
     if(catItems.length===0) return;
     html+='<div class="cat">'+cat.cat+'</div>';
