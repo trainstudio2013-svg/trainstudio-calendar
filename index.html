@@ -1882,10 +1882,7 @@ document.getElementById('icsBtn').addEventListener('click',function(){document.g
 document.getElementById('closeModal').addEventListener('click',function(){document.getElementById('modalBg').classList.remove('open');});
 document.getElementById('fileDrop').addEventListener('click',function(){document.getElementById('fileInput').click();});
 document.getElementById('fileInput').addEventListener('change',function(){loadICS(this);});
-document.getElementById('drawerOverlay').addEventListener('click',function(){
-  document.getElementById('drawer').classList.remove('open');
-  document.getElementById('drawerOverlay').classList.remove('open');
-});
+// drawerOverlay click disabled — drawer closes only via X button
 document.getElementById('drawerHandle').addEventListener('click',function(){
   document.getElementById('drawer').classList.remove('open');
   document.getElementById('drawerOverlay').classList.remove('open');
@@ -1926,15 +1923,7 @@ document.addEventListener('touchstart',function(e){
 document.addEventListener('touchend',function(e){
   var dx=e.changedTouches[0].clientX-txS;
   var dy=e.changedTouches[0].clientY-tyS;
-  // Swipe down on open drawer → close it
-  if(dy>60&&Math.abs(dy)>Math.abs(dx)){
-    var drawer=document.getElementById('drawer');
-    if(drawer.classList.contains('open')){
-      drawer.classList.remove('open');
-      document.getElementById('drawerOverlay').classList.remove('open');
-      return;
-    }
-  }
+  // Swipe down disabled — drawer closes only via X button
   // Horizontal swipe → change month (only when drawer closed)
   if(Math.abs(dx)>50&&Math.abs(dx)>Math.abs(dy)&&!sideOpen){
     if(dx<0)nextM();else prevM();
