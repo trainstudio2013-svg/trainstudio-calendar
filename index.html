@@ -2394,6 +2394,13 @@ async function loadWarehouseStock(){
     });
     var data2=await r2.json();
 
+    // Mapping cat_id (warehouse) → cat label (PACK_CATALOG)
+    var CAT_ID_TO_LABEL={
+      'sound':'🔊 Ήχος','backline':'🎸 Backline','cables':'🔌 Καλώδια',
+      'power':'⚡ Παροχές','stands':'🎤 Stands','lights':'💡 Φώτα',
+      'av':'📹 AV','truss':'🏗 Truss'
+    };
+
     // Χτίσε δυναμικό κατάλογο συνδυάζοντας PACK_CATALOG + inventory_items
     var dynamicMap={};
     // Πρώτα βάλε όλα από PACK_CATALOG
@@ -2404,18 +2411,35 @@ async function loadWarehouseStock(){
       });
     });
 
+    // Mapping από cat_id → cat label (για αντιστοίχιση νέων items)
+    var catIdToLabel={};
+    PACK_CATALOG.forEach(function(cat){
+      // Βγάλε το cat_id από το πρώτο item του catalog (π.χ. 'sound' από 'tw_t24n_60')
+      // Χρησιμοποιούμε το cat label ως fallback key
+      catIdToLabel[cat.cat]=cat.cat;
+    });
+    // Χτίσε και αντίστροφο mapping από prefix του id → cat label
+    var idPrefixToCat={};
+    PACK_CATALOG.forEach(function(cat){
+      cat.items.forEach(function(item){
+        // Δεν χρειάζεται prefix — θα χρησιμοποιήσουμε το sub_name από inventory_items
+      });
+    });
+
     // Μετά πρόσθεσε νέα από inventory_items που δεν υπάρχουν ήδη
     if(Array.isArray(data2)){
       data2.forEach(function(row){
         if(!row.name||!row.id) return;
-        var catKey=row.cat_id||'➕ Νέα';
-        if(!dynamicMap[catKey]) dynamicMap[catKey]=[];
-        // Έλεγξε αν υπάρχει ήδη
+        // Βρες αν υπάρχει ήδη στο dynamicMap
         var exists=false;
         Object.keys(dynamicMap).forEach(function(k){
           if(dynamicMap[k].find(function(i){return i.id===row.id;})) exists=true;
         });
-        if(!exists) dynamicMap[catKey].push({id:row.id,name:row.name});
+        if(exists) return;
+        // Βρες το σωστό cat label
+        var catLabel=CAT_ID_TO_LABEL[row.cat_id]||row.cat_id||'➕ Νέα';
+        if(!dynamicMap[catLabel]) dynamicMap[catLabel]=[];
+        dynamicMap[catLabel].push({id:row.id,name:row.name});
       });
     }
 
