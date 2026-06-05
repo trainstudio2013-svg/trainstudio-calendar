@@ -610,14 +610,27 @@ function render(){
     const addBtn = document.createElement('button');
     addBtn.className = 'btn-add';
     addBtn.textContent = 'Προσθήκη';
-    addBtn.onclick = () => {
+    addBtn.onclick = async () => {
       const name = inp.value.trim();
       if(!name) return;
       const id = cat.id + '_' + name.toLowerCase().replace(/[^a-z0-9]/g,'_') + '_' + Date.now().toString(36);
       const targetSub = cat.items.find(s => s.sub === subSel.value) || cat.items[cat.items.length-1];
       targetSub.items.push({id, name, qty:0});
       inventory[id] = 0;
-      saveItem(id, 0);
+      // Αποθήκευση ποσότητας
+      await saveItem(id, 0);
+      // Αποθήκευση ονόματος/κατηγορίας στο inventory_items
+      try{
+        await fetch(`${SUPABASE_URL}/rest/v1/inventory_items`, {
+          method:'POST',
+          headers:{
+            'apikey':SUPABASE_KEY,'Authorization':`Bearer ${SUPABASE_KEY}`,
+            'Content-Type':'application/json',
+            'Prefer':'resolution=merge-duplicates,return=minimal'
+          },
+          body: JSON.stringify({id, name, cat_id:cat.id, sub_name:targetSub.sub})
+        });
+      }catch(e){ console.log('Save item error:', e); }
       inp.value = '';
       render();
     };
