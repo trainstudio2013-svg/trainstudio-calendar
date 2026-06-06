@@ -2921,15 +2921,14 @@ async function returnItems(evId,items,notReturned){
   try{
     // Κρατάμε μόνο τα "δεν επέστρεψαν"
     if(Object.keys(notReturned).length>0){
+      // Μερική επιστροφή — ενημέρωσε το packing list με μόνο αυτά που δεν επέστρεψαν
       var rows=Object.keys(notReturned).map(function(id){
         return {event_id:evId,item_id:id,qty:notReturned[id]};
       });
-      // Διαγράφουμε παλιό packing list
       await fetch(SB_URL+'/rest/v1/packing_lists?event_id=eq.'+encodeURIComponent(evId),{
         method:'DELETE',
         headers:{'apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY,'Prefer':'return=minimal'}
       });
-      // Αποθηκεύουμε μόνο αυτά που δεν επέστρεψαν
       await fetch(SB_URL+'/rest/v1/packing_lists',{
         method:'POST',
         headers:{'apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY,'Content-Type':'application/json','Prefer':'return=minimal'},
@@ -2937,9 +2936,15 @@ async function returnItems(evId,items,notReturned){
       });
       alert('✅ Καταχωρήθηκε! '+Object.keys(notReturned).length+' αντικείμενα παραμένουν εκτός αποθήκης.');
     } else {
-      // Όλα επέστρεψαν — κρατάμε το packing list ως ιστορικό (δεν διαγράφουμε)
+      // Όλα επέστρεψαν — διαγράφουμε από packing_lists ώστε να φύγει από το κόκκινο panel
+      await fetch(SB_URL+'/rest/v1/packing_lists?event_id=eq.'+encodeURIComponent(evId),{
+        method:'DELETE',
+        headers:{'apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY,'Prefer':'return=minimal'}
+      });
       alert('✅ Όλος ο εξοπλισμός επέστρεψε στην αποθήκη!');
     }
+    // Ανανέωσε το κόκκινο panel
+    await checkMissingEquipment();
   }catch(e){alert('Σφάλμα κατά την αποθήκευση.');}
 }
 
