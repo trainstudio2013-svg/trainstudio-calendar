@@ -432,6 +432,8 @@ function getQty(id, defaultQty){
 
 let dragSrc=null;
 
+var openSubs = new Set(); // Θυμάται ποιες υποκατηγορίες είναι ανοιχτές
+
 function render(){
   // Tabs
   const tabs = document.getElementById('catTabs');
@@ -479,14 +481,20 @@ function render(){
 
       const grid = document.createElement('div');
       grid.className = 'eq-grid';
-      grid.style.display = 'none'; // Κλειστό αρχικά
+      const subKey = cat.id + '|||' + sub.sub;
+      const isOpen = openSubs.has(subKey);
+      grid.style.display = isOpen ? 'grid' : 'none';
+      arrow.style.transform = isOpen ? 'rotate(90deg)' : '';
+      subTitleWrap.style.background = isOpen ? '#eff6ff' : '#f1f5f9';
+      subTitleWrap.style.borderColor = isOpen ? '#bfdbfe' : '#e2e8f0';
 
       subTitleWrap.onclick = () => {
-        const isOpen = grid.style.display !== 'none';
-        grid.style.display = isOpen ? 'none' : 'grid';
-        arrow.style.transform = isOpen ? '' : 'rotate(90deg)';
-        subTitleWrap.style.background = isOpen ? '#f1f5f9' : '#eff6ff';
-        subTitleWrap.style.borderColor = isOpen ? '#e2e8f0' : '#bfdbfe';
+        const nowOpen = grid.style.display !== 'none';
+        if(nowOpen){ openSubs.delete(subKey); } else { openSubs.add(subKey); }
+        grid.style.display = nowOpen ? 'none' : 'grid';
+        arrow.style.transform = nowOpen ? '' : 'rotate(90deg)';
+        subTitleWrap.style.background = nowOpen ? '#f1f5f9' : '#eff6ff';
+        subTitleWrap.style.borderColor = nowOpen ? '#e2e8f0' : '#bfdbfe';
       };
 
       sub.items.forEach(item => {
