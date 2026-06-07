@@ -455,17 +455,39 @@ function render(){
       const subDiv = document.createElement('div');
       subDiv.className = 'subsection';
 
-      // Subsection title
+      // Accordion header
       const subTitleWrap = document.createElement('div');
       subTitleWrap.className = 'subsection-title';
+      subTitleWrap.style.cssText='cursor:pointer;user-select:none;display:flex;align-items:center;justify-content:space-between;padding:10px 14px;background:#f1f5f9;border-radius:10px;margin-bottom:4px;border:1.5px solid #e2e8f0';
+
       const subTitle = document.createElement('span');
       subTitle.textContent = sub.sub;
-      subTitle.style.cssText='flex:1;font-size:11px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.06em;font-family:"DM Mono",monospace';
+      subTitle.style.cssText='flex:1;font-size:13px;font-weight:700;color:#1e293b;letter-spacing:.02em;font-family:"DM Sans",sans-serif';
+
+      const itemCount = document.createElement('span');
+      itemCount.style.cssText='font-size:11px;color:#94a3b8;font-family:"DM Mono",monospace;margin-right:8px';
+      itemCount.textContent = sub.items.length + ' είδη';
+
+      const arrow = document.createElement('span');
+      arrow.textContent = '▶';
+      arrow.style.cssText='font-size:10px;color:#94a3b8;transition:transform .2s;display:inline-block';
+
       subTitleWrap.appendChild(subTitle);
+      subTitleWrap.appendChild(itemCount);
+      subTitleWrap.appendChild(arrow);
       subDiv.appendChild(subTitleWrap);
 
       const grid = document.createElement('div');
       grid.className = 'eq-grid';
+      grid.style.display = 'none'; // Κλειστό αρχικά
+
+      subTitleWrap.onclick = () => {
+        const isOpen = grid.style.display !== 'none';
+        grid.style.display = isOpen ? 'none' : 'grid';
+        arrow.style.transform = isOpen ? '' : 'rotate(90deg)';
+        subTitleWrap.style.background = isOpen ? '#f1f5f9' : '#eff6ff';
+        subTitleWrap.style.borderColor = isOpen ? '#e2e8f0' : '#bfdbfe';
+      };
 
       sub.items.forEach(item => {
         const qty = getQty(item.id, item.qty);
