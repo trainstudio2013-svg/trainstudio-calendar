@@ -378,10 +378,21 @@ async function loadInventory(){
           }
         } else {
           // ΝΕΟ item — δεν υπάρχει στο CATALOG, πρόσθεσέ το
-          if(row.cat_id && row.sub_name){
-            const targetCat = CATALOG.find(c => c.id === row.cat_id);
-            const targetSub = targetCat ? targetCat.items.find(s => s.sub === row.sub_name) : null;
-            if(targetSub && !targetSub.items.find(i => i.id === row.id)){
+          if(row.cat_id){
+            let targetCat = CATALOG.find(c => c.id === row.cat_id);
+            // Αν δεν υπάρχει η κατηγορία, δημιούργησέ την αυτόματα
+            if(!targetCat){
+              targetCat = {id: row.cat_id, label: row.cat_id, emoji: '📦', items: []};
+              CATALOG.push(targetCat);
+            }
+            const subName = row.sub_name || row.cat_id;
+            let targetSub = targetCat.items.find(s => s.sub === subName);
+            // Αν δεν υπάρχει η υποκατηγορία, δημιούργησέ την
+            if(!targetSub){
+              targetSub = {sub: subName, items: []};
+              targetCat.items.push(targetSub);
+            }
+            if(!targetSub.items.find(i => i.id === row.id)){
               targetSub.items.push({id:row.id, name:row.name, qty:0});
             }
           }
