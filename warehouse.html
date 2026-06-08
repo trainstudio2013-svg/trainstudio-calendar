@@ -380,19 +380,18 @@ async function loadInventory(){
           // ΝΕΟ item — δεν υπάρχει στο CATALOG, πρόσθεσέ το
           if(row.cat_id){
             let targetCat = CATALOG.find(c => c.id === row.cat_id);
-            // Αν δεν υπάρχει η κατηγορία, δημιούργησέ την αυτόματα
             if(!targetCat){
               targetCat = {id: row.cat_id, label: row.cat_id, emoji: '📦', items: []};
               CATALOG.push(targetCat);
             }
             const subName = row.sub_name || row.cat_id;
             let targetSub = targetCat.items.find(s => s.sub === subName);
-            // Αν δεν υπάρχει η υποκατηγορία, δημιούργησέ την
             if(!targetSub){
               targetSub = {sub: subName, items: []};
               targetCat.items.push(targetSub);
             }
-            if(!targetSub.items.find(i => i.id === row.id)){
+            // Αγνόησε placeholder items (μόνο για αποθήκευση υποκατηγορίας)
+            if(row.name !== '__subcategory__' && !targetSub.items.find(i => i.id === row.id)){
               targetSub.items.push({id:row.id, name:row.name, qty:0});
             }
           }
@@ -495,6 +494,44 @@ function render(){
         arrow.style.transform = nowOpen ? '' : 'rotate(90deg)';
         subTitleWrap.style.background = nowOpen ? '#f1f5f9' : '#eff6ff';
         subTitleWrap.style.borderColor = nowOpen ? '#e2e8f0' : '#bfdbfe';
+      };
+
+      // Double-click για μετονομασία υποκατηγορίας
+      subTitle.ondblclick = async (e) => {
+        e.stopPropagation();
+        const oldName = sub.sub;
+        const inp = document.createElement('input');
+        inp.value = oldName;
+        inp.style.cssText='flex:1;font-size:13px;font-weight:700;color:#1e293b;font-family:"DM Sans",sans-serif;border:none;outline:none;background:transparent;width:100%';
+        subTitle.replaceWith(inp);
+        inp.focus();
+        inp.select();
+        const save = async () => {
+          const newName = inp.value.trim();
+          if(newName && newName !== oldName){
+            // Ενημέρωσε το CATALOG
+            sub.sub = newName;
+            // Ενημέρωσε το Supabase — όλα τα items αυτής της υποκατηγορίας
+            const allIds = sub.items.map(i=>i.id);
+            // Ενημέρωσε placeholder
+            const placeholderId = cat.id + '___sub___' + oldName.toLowerCase().replace(/[^a-z0-9]/g,'_');
+            const newPlaceholderId = cat.id + '___sub___' + newName.toLowerCase().replace(/[^a-z0-9]/g,'_');
+            try{
+              await fetch(`${SUPABASE_URL}/rest/v1/inventory_items?sub_name=eq.${encodeURIComponent(oldName)}&cat_id=eq.${cat.id}`,{
+                method:'PATCH',
+                headers:{'apikey':SUPABASE_KEY,'Authorization':`Bearer ${SUPABASE_KEY}`,'Content-Type':'application/json','Prefer':'return=minimal'},
+                body: JSON.stringify({sub_name: newName})
+              });
+            }catch(e){ console.log('Rename error:',e); }
+            // Ενημέρωσε openSubs key
+            const oldKey = cat.id + '|||' + oldName;
+            const newKey = cat.id + '|||' + newName;
+            if(openSubs.has(oldKey)){ openSubs.delete(oldKey); openSubs.add(newKey); }
+          }
+          render();
+        };
+        inp.onblur = save;
+        inp.onkeydown = (e) => { if(e.key==='Enter') inp.blur(); if(e.key==='Escape'){ inp.value=oldName; inp.blur(); } };
       };
 
       sub.items.forEach(item => {
@@ -633,11 +670,25 @@ function render(){
     const addSubBtn = document.createElement('button');
     addSubBtn.className = 'btn-add-sub';
     addSubBtn.textContent = '+ Κατηγορία';
-    addSubBtn.onclick = () => {
+    addSubBtn.onclick = async () => {
       const name = subInp.value.trim();
       if(!name) return;
       cat.items.push({sub:name, items:[]});
       subInp.value = '';
+      // Αποθήκευση placeholder item στο Supabase για να θυμάται την υποκατηγορία
+      const placeholderId = cat.id + '___sub___' + name.toLowerCase().replace(/[^a-z0-9]/g,'_');
+      try{
+        await fetch(`${SUPABASE_URL}/rest/v1/inventory_items`, {
+          method:'POST',
+          headers:{
+            'apikey':SUPABASE_KEY,
+            'Authorization':`Bearer ${SUPABASE_KEY}`,
+            'Content-Type':'application/json',
+            'Prefer':'resolution=merge-duplicates,return=minimal'
+          },
+          body: JSON.stringify({id:placeholderId, name:'__subcategory__', cat_id:cat.id, sub_name:name})
+        });
+      }catch(e){ console.log('Sub save error:',e); }
       render();
     };
     addSubRow.appendChild(subInp);
