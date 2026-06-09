@@ -2534,11 +2534,36 @@ async function loadWarehouseStock(){
 
     // Μετατροπή σε array με υποκατηγορίες
     // Format: [{cat, subs:[{sub, items:[]}]}]
+    // Χτίσε dynamicCatalog με τη σειρά του PACK_CATALOG
+    var packCatOrder=PACK_CATALOG.map(function(c){return c.cat;});
+
     dynamicCatalog=Object.keys(dynamicMap).map(function(catLabel){
+      // Σειρά υποκατηγοριών βάσει PACK_CATALOG
+      var packCat=PACK_CATALOG.find(function(c){return c.cat===catLabel;});
+      var subOrder=packCat&&packCat.subs?packCat.subs.map(function(s){return s.sub;}):[];
+
       var subs=Object.keys(dynamicMap[catLabel]).map(function(subName){
         return {sub:subName, items:dynamicMap[catLabel][subName]};
       });
+      // Ταξινόμηση υποκατηγοριών
+      subs.sort(function(a,b){
+        var ia=subOrder.indexOf(a.sub);
+        var ib=subOrder.indexOf(b.sub);
+        if(ia===-1&&ib===-1) return 0;
+        if(ia===-1) return 1;
+        if(ib===-1) return -1;
+        return ia-ib;
+      });
       return {cat:catLabel, subs:subs};
+    });
+    // Ταξινόμηση κατηγοριών βάσει PACK_CATALOG
+    dynamicCatalog.sort(function(a,b){
+      var ia=packCatOrder.indexOf(a.cat);
+      var ib=packCatOrder.indexOf(b.cat);
+      if(ia===-1&&ib===-1) return 0;
+      if(ia===-1) return 1;
+      if(ib===-1) return -1;
+      return ia-ib;
     });
 
     console.log('Warehouse loaded:', Object.keys(warehouseStock).length, 'items,', dynamicCatalog.length, 'categories');
@@ -2663,9 +2688,9 @@ async function openPackingList(ev, openCatalog){
       catWrap.style.cssText='margin-bottom:4px;';
 
       var catHdr=document.createElement('div');
-      catHdr.style.cssText='display:flex;align-items:center;justify-content:space-between;padding:8px 12px;background:#1e293b;border-radius:8px;cursor:pointer;user-select:none;margin-top:10px';
+      catHdr.style.cssText='display:flex;align-items:center;justify-content:space-between;padding:8px 12px;background:#e2e8f0;border-radius:8px;cursor:pointer;user-select:none;margin-top:10px;border:1.5px solid #cbd5e1';
       var catTitle=document.createElement('span');
-      catTitle.style.cssText='font-size:12px;font-weight:800;color:#fff;text-transform:uppercase;letter-spacing:.08em;font-family:"DM Mono",monospace';
+      catTitle.style.cssText='font-size:12px;font-weight:800;color:#1e293b;text-transform:uppercase;letter-spacing:.08em;font-family:"DM Mono",monospace';
       catTitle.textContent=cat.cat;
       var catArrow=document.createElement('span');
       catArrow.textContent='▶';
@@ -2681,7 +2706,7 @@ async function openPackingList(ev, openCatalog){
         var open=catBody.style.display!=='none';
         catBody.style.display=open?'none':'block';
         catArrow.style.transform=open?'':'rotate(90deg)';
-        catHdr.style.background=open?'#1e293b':'#0f172a';
+        catHdr.style.background=open?'#e2e8f0':'#dbeafe';catHdr.style.borderColor=open?'#cbd5e1':'#93c5fd';
         if(open) packOpenCats.delete(cat.cat); else packOpenCats.add(cat.cat);
       };
 
