@@ -717,6 +717,9 @@ function buildPanel(container,evs,ds){
     /* VEHICLES */
     buildVehicle(card,ev);
 
+    /* TEAMMATES - μη admin: βλέπει συναδέλφους */
+    buildTeammates(card,ev);
+
     /* STATUS - admin only */
     if(isAdmin()) buildStatus(card,ev);
 
@@ -927,6 +930,45 @@ function buildAddEvent(container, dateStr){
     titleInp.focus();
   });
   container.appendChild(btn);
+}
+
+function buildTeammates(parent,ev){
+  // Εμφανίζεται μόνο σε non-admin, αν υπάρχουν ανατεθειμένα μέλη
+  if(isAdmin()) return;
+  if(!ev.assigned || ev.assigned.length===0) return;
+
+  // Βρες τα μέλη εκτός από τον τρέχοντα χρήστη
+  var others = ev.assigned.filter(function(m){ return m !== curUser; });
+  if(others.length===0) return;
+
+  var wrap=document.createElement('div');
+  wrap.style.cssText='margin-bottom:12px;';
+
+  var lbl=document.createElement('div');
+  lbl.style.cssText='font-size:10px;color:var(--text3);font-family:"DM Mono",monospace;text-transform:uppercase;letter-spacing:.06em;font-weight:600;margin-bottom:8px;';
+  lbl.textContent='👥 Ομάδα';
+  wrap.appendChild(lbl);
+
+  var row=document.createElement('div');
+  row.style.cssText='display:flex;flex-wrap:wrap;gap:6px;';
+
+  others.forEach(function(member){
+    var chip=document.createElement('div');
+    chip.style.cssText='display:flex;align-items:center;gap:5px;padding:5px 10px;border-radius:20px;background:#f0fdf4;border:1.5px solid #86efac;font-size:12px;font-weight:600;color:#15803d;';
+    var info = STAFF[member];
+    chip.textContent = '👤 ' + (info ? member : member);
+    // Αν υπάρχει ρόλος
+    if(ev.roles && ev.roles[member]){
+      var role=document.createElement('span');
+      role.style.cssText='font-size:10px;color:#64748b;font-weight:400;margin-left:2px;';
+      role.textContent='· '+ev.roles[member];
+      chip.appendChild(role);
+    }
+    row.appendChild(chip);
+  });
+
+  wrap.appendChild(row);
+  parent.appendChild(wrap);
 }
 
 function buildVehicle(parent,ev){
@@ -2611,14 +2653,41 @@ async function openPackingList(ev, openCatalog){
     catDivider.style.cssText='border-top:2px dashed #e2e8f0;margin-bottom:10px';
     catalogSection.appendChild(catDivider);
 
-    // Κτίσε κατάλογο
-    catalogToUse.forEach(function(cat){
-      var catHdr=document.createElement('div');
-      catHdr.style.cssText='font-size:12px;font-weight:800;color:#1e293b;text-transform:uppercase;letter-spacing:.08em;margin:14px 0 8px;font-family:"DM Mono",monospace;text-align:center;background:#f1f5f9;padding:6px;border-radius:7px';
-      catHdr.textContent=cat.cat;
-      catalogSection.appendChild(catHdr);
+    // Κτίσε κατάλογο με accordion
+    var packOpenCats=new Set(); // ανοιχτές κατηγορίες
+    var packOpenSubs=new Set(); // ανοιχτές υποκατηγορίες
 
-      // Αν έχει υποκατηγορίες, εμφάνισέ τες
+    catalogToUse.forEach(function(cat){
+      // Κατηγορία header — accordion
+      var catWrap=document.createElement('div');
+      catWrap.style.cssText='margin-bottom:4px;';
+
+      var catHdr=document.createElement('div');
+      catHdr.style.cssText='display:flex;align-items:center;justify-content:space-between;padding:8px 12px;background:#1e293b;border-radius:8px;cursor:pointer;user-select:none;margin-top:10px';
+      var catTitle=document.createElement('span');
+      catTitle.style.cssText='font-size:12px;font-weight:800;color:#fff;text-transform:uppercase;letter-spacing:.08em;font-family:"DM Mono",monospace';
+      catTitle.textContent=cat.cat;
+      var catArrow=document.createElement('span');
+      catArrow.textContent='▶';
+      catArrow.style.cssText='font-size:9px;color:#94a3b8;transition:transform .2s;display:inline-block';
+      catHdr.appendChild(catTitle);catHdr.appendChild(catArrow);
+      catWrap.appendChild(catHdr);
+
+      var catBody=document.createElement('div');
+      catBody.style.display='none';
+      catWrap.appendChild(catBody);
+
+      catHdr.onclick=function(){
+        var open=catBody.style.display!=='none';
+        catBody.style.display=open?'none':'block';
+        catArrow.style.transform=open?'':'rotate(90deg)';
+        catHdr.style.background=open?'#1e293b':'#0f172a';
+        if(open) packOpenCats.delete(cat.cat); else packOpenCats.add(cat.cat);
+      };
+
+      catalogSection.appendChild(catWrap);
+
+      // Υποκατηγορίες
       var subsToRender=[];
       if(cat.subs){
         cat.subs.forEach(function(s){if(s.items.length>0) subsToRender.push(s);});
@@ -2627,13 +2696,39 @@ async function openPackingList(ev, openCatalog){
       }
 
       subsToRender.forEach(function(subObj){
+        var subKey=cat.cat+'|||'+(subObj.sub||'');
+        var subWrap=document.createElement('div');
+        subWrap.style.cssText='margin:4px 0';
+
         if(subObj.sub){
           var subHdr=document.createElement('div');
-          subHdr.style.cssText='font-size:11px;font-weight:800;color:#475569;text-transform:uppercase;letter-spacing:.08em;margin:10px 0 5px;font-family:"DM Mono",monospace;text-align:center;background:#f1f5f9;padding:5px 8px;border-radius:6px;border-left:3px solid #94a3b8';
-          subHdr.textContent=subObj.sub;
-          catalogSection.appendChild(subHdr);
-        }
-        subObj.items.forEach(function(item){
+          subHdr.style.cssText='display:flex;align-items:center;justify-content:space-between;padding:6px 10px;background:#f1f5f9;border-radius:6px;border-left:3px solid #94a3b8;cursor:pointer;user-select:none;margin-bottom:2px';
+          var subTitle=document.createElement('span');
+          subTitle.style.cssText='font-size:11px;font-weight:700;color:#475569;text-transform:uppercase;letter-spacing:.06em;font-family:"DM Mono",monospace';
+          subTitle.textContent=subObj.sub;
+          var subArrow=document.createElement('span');
+          subArrow.textContent='▶';
+          subArrow.style.cssText='font-size:9px;color:#94a3b8;transition:transform .2s;display:inline-block';
+          subHdr.appendChild(subTitle);subHdr.appendChild(subArrow);
+          subWrap.appendChild(subHdr);
+
+          var subBody=document.createElement('div');
+          subBody.style.display='none';
+          subWrap.appendChild(subBody);
+
+          subHdr.onclick=function(e){
+            e.stopPropagation();
+            var open=subBody.style.display!=='none';
+            subBody.style.display=open?'none':'block';
+            subArrow.style.transform=open?'':'rotate(90deg)';
+            subHdr.style.background=open?'#f1f5f9':'#eff6ff';
+            if(open) packOpenSubs.delete(subKey); else packOpenSubs.add(subKey);
+          };
+
+          catBody.appendChild(subWrap);
+          // items θα μπουν στο subBody
+          var itemContainer=subBody;
+          subObj.items.forEach(function(item){
         var stock=warehouseStock[item.id]||0;
         var curQty=packState[item.id]||0;
 
@@ -2720,9 +2815,50 @@ async function openPackingList(ev, openCatalog){
 
         qtyWrap.appendChild(btnM);qtyWrap.appendChild(numInp);qtyWrap.appendChild(btnP);
         row.appendChild(name);row.appendChild(stockBadge);row.appendChild(qtyWrap);row.appendChild(warn);
-        catalogSection.appendChild(row);
-        catalogSection.appendChild(depWarn);
+        itemContainer.appendChild(row);
+        itemContainer.appendChild(depWarn);
         });// end subObj.items
+
+        } else {
+          // Χωρίς υποκατηγορία — items απευθείας στο catBody
+          var itemContainer=catBody;
+          subObj.items.forEach(function(item){
+            var stock=warehouseStock[item.id]||0;
+            var curQty=packState[item.id]||0;
+            var row=document.createElement('div');
+            row.style.cssText='display:flex;align-items:center;gap:8px;padding:5px 8px;border-radius:7px;margin-bottom:2px;'+(curQty>0?'background:#eff6ff;border:1.5px solid #bfdbfe;':'border-bottom:1px solid #f8fafc;');
+            var name=document.createElement('div');
+            name.style.cssText='flex:1;font-size:13px;color:#1e293b;font-weight:'+(curQty>0?'600':'400');
+            name.textContent=item.name;
+            var qtyWrap=document.createElement('div');
+            qtyWrap.style.cssText='display:flex;align-items:center;gap:4px';
+            var btnM2=document.createElement('button');
+            btnM2.textContent='−';
+            btnM2.style.cssText='width:24px;height:24px;border-radius:5px;border:1px solid #e2e8f0;background:#f8fafc;cursor:pointer;font-size:13px;font-weight:700;color:#475569';
+            var numInp2=document.createElement('input');
+            numInp2.type='number';numInp2.min='0';numInp2.value=curQty;
+            numInp2.style.cssText='width:40px;height:24px;border-radius:5px;border:1px solid #e2e8f0;font-size:12px;font-weight:700;text-align:center;font-family:"DM Mono",monospace;color:'+(curQty>0?'#2563eb':'#94a3b8')+';padding:0;outline:none';
+            var btnP2=document.createElement('button');
+            btnP2.textContent='+';
+            btnP2.style.cssText='width:24px;height:24px;border-radius:5px;border:1px solid #e2e8f0;background:#f8fafc;cursor:pointer;font-size:13px;font-weight:700;color:#475569';
+            (function(itm,rowEl,nameEl,numEl,btnPEl){
+              function upd(q){
+                q=Math.max(0,parseInt(q)||0);
+                packState[itm.id]=q;
+                numEl.value=q;numEl.style.color=q>0?'#2563eb':'#94a3b8';
+                nameEl.style.fontWeight=q>0?'600':'400';
+                rowEl.style.cssText='display:flex;align-items:center;gap:8px;padding:5px 8px;border-radius:7px;margin-bottom:2px;'+(q>0?'background:#eff6ff;border:1.5px solid #bfdbfe;':'border-bottom:1px solid #f8fafc;');
+                buildSummary();
+              }
+              btnM2.onclick=function(){upd(packState[itm.id]-1);};
+              btnP2.onclick=function(){upd(packState[itm.id]+1);};
+              numEl.onchange=function(){upd(numEl.value);};
+            })(item,row,name,numInp2,btnP2);
+            qtyWrap.appendChild(btnM2);qtyWrap.appendChild(numInp2);qtyWrap.appendChild(btnP2);
+            row.appendChild(name);row.appendChild(qtyWrap);
+            itemContainer.appendChild(row);
+          });
+        }
       });// end subsToRender
     });
 
