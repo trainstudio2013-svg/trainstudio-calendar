@@ -1578,7 +1578,7 @@ function showMonthlySummary(){
       hdr.addEventListener('click',function(e){
         if(e.target===pBtn||pBtn.contains(e.target)) return;
         isOpen=!isOpen;
-        evList.style.maxHeight=isOpen?'0':'9999px';
+        evList.style.maxHeight=isOpen?'9999px':'0';
         arr.style.transform=isOpen?'rotate(180deg)':'rotate(0deg)';
         hdr.style.background=isOpen?'#eff6ff':'#f8fafc';
         hdr.style.borderColor=isOpen?'#93c5fd':'#e2e8f0';
