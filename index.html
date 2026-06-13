@@ -1424,44 +1424,87 @@ function showMonthlySummary(){
   content.innerHTML='';
 
   if(isAdmin()){
-    // Admin: εμφάνιση ανά μήνα → ανά μέλος
-    monthKeys.forEach(function(mkey){
-      var mdata=monthMap[mkey];
-      var monthEvs=mdata.evs;
-      var mLabel=MONTHS_FULL[mdata.month]+' '+mdata.year;
-      var isCurMonth=(mdata.year===curY && mdata.month===curM);
-
-      // Μήνας header — accordion
-      var monthWrap=document.createElement('div');
-      monthWrap.style.cssText='margin-bottom:16px;';
-      var monthHdr=document.createElement('div');
-      monthHdr.style.cssText='display:flex;align-items:center;justify-content:space-between;padding:10px 14px;background:'+(isCurMonth?'#dbeafe':'#f1f5f9')+';border-radius:10px;border:1.5px solid '+(isCurMonth?'#93c5fd':'#e2e8f0')+';cursor:pointer;margin-bottom:8px';
-      var monthTitle=document.createElement('div');
-      monthTitle.style.cssText='font-size:14px;font-weight:800;color:#1e293b';
-      monthTitle.textContent='📅 '+mLabel;
-      var monthCount=document.createElement('div');
-      monthCount.style.cssText='font-size:11px;color:#64748b;background:#e2e8f0;padding:2px 8px;border-radius:12px;margin-right:8px';
-      monthCount.textContent=monthEvs.length+' εκδηλώσεις';
-      var monthArrow=document.createElement('span');
-      monthArrow.style.cssText='font-size:12px;color:#94a3b8;transition:transform .2s;display:inline-block';
-      monthArrow.textContent='▼';
-      monthHdr.appendChild(monthTitle);monthHdr.appendChild(monthCount);monthHdr.appendChild(monthArrow);
-      monthWrap.appendChild(monthHdr);
-
-      var monthBody=document.createElement('div');
-      monthBody.style.cssText='overflow:hidden;max-height:'+(isCurMonth?'9999':'0')+'px;transition:max-height .3s ease;padding:0 4px';
-      monthArrow.style.transform=isCurMonth?'rotate(180deg)':'rotate(0deg)';
-      monthHdr.onclick=function(){
-        var open=monthBody.style.maxHeight!=='0px'&&monthBody.style.maxHeight!=='0';
-        monthBody.style.maxHeight=open?'0':'9999px';
-        monthArrow.style.transform=open?'rotate(0deg)':'rotate(180deg)';
-        monthHdr.style.background=open?'#f1f5f9':'#dbeafe';
-      };
-      monthWrap.appendChild(monthBody);
-      content.appendChild(monthWrap);
-
+    // Admin: ανά μέλος → ανά μήνας μέσα
     STAFF.forEach(function(st,si){
-      var myEvs=monthEvs.filter(function(ev){return ev.assigned&&ev.assigned.indexOf(si)!==-1;});
+      // Συλλογή όλων των εκδηλώσεων του μέλους ανά μήνα
+      var memberMonths={};
+      monthKeys.forEach(function(mkey){
+        var mdata=monthMap[mkey];
+        var mEvs=mdata.evs.filter(function(ev){return ev.assigned&&ev.assigned.indexOf(si)!==-1;});
+        if(mEvs.length>0) memberMonths[mkey]={year:mdata.year,month:mdata.month,evs:mEvs};
+      });
+      var totalEvs=Object.values(memberMonths).reduce(function(s,m){return s+m.evs.length;},0);
+
+      var wrap=document.createElement('div');
+      wrap.style.cssText='margin-bottom:18px;';
+
+      // Μέλος header
+      var isOpen=false;
+      var hdr=document.createElement('div');
+      hdr.style.cssText='display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:10px;background:#f8fafc;border:1px solid #e2e8f0;cursor:pointer;user-select:none';
+      var col=COLORS[si%COLORS.length];
+      var av=document.createElement('div');
+      av.style.cssText='width:28px;height:28px;border-radius:50%;background:'+col+';display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;color:#fff;flex-shrink:0';
+      av.textContent=st.name.substring(0,2).toUpperCase();
+      var name=document.createElement('div');
+      name.style.cssText='font-size:13px;font-weight:700;color:#1e293b;flex:1';
+      name.textContent=st.name;
+      var cnt=document.createElement('div');
+      cnt.style.cssText='font-size:11px;color:#64748b;background:#e2e8f0;padding:2px 8px;border-radius:12px';
+      cnt.textContent=totalEvs+' εργασίες';
+      var arr=document.createElement('span');
+      arr.style.cssText='font-size:12px;color:#94a3b8;transition:transform .2s;display:inline-block';
+      arr.textContent='▼';
+      var pBtn=document.createElement('button');
+      pBtn.textContent='🖨';
+      pBtn.title='Εκτύπωση συνολικά';
+      pBtn.style.cssText='background:none;border:1px solid #e2e8f0;border-radius:6px;padding:2px 6px;cursor:pointer;font-size:13px;flex-shrink:0';
+      pBtn.addEventListener('click',(function(idx){return function(e){e.stopPropagation();printMemberReport(idx);};})(si));
+      hdr.appendChild(av);hdr.appendChild(name);hdr.appendChild(cnt);hdr.appendChild(arr);hdr.appendChild(pBtn);
+
+      var evList=document.createElement('div');
+      evList.style.cssText='overflow:hidden;max-height:0;transition:max-height .3s ease;padding:0 4px';
+
+      // Μήνες accordion μέσα στο μέλος
+      Object.keys(memberMonths).sort(function(a,b){return b.localeCompare(a);}).forEach(function(mkey){
+        var mdata=memberMonths[mkey];
+        var isCurMonth=(mdata.year===curY && mdata.month===curM);
+        var mLabel=MONTHS_FULL[mdata.month]+' '+mdata.year;
+
+        var mWrap=document.createElement('div');
+        mWrap.style.cssText='margin-bottom:6px;';
+
+        var mHdr=document.createElement('div');
+        mHdr.style.cssText='display:flex;align-items:center;justify-content:space-between;padding:7px 10px;background:'+(isCurMonth?'#dbeafe':'#f1f5f9')+';border-radius:8px;border:1px solid '+(isCurMonth?'#93c5fd':'#e2e8f0')+';cursor:pointer;margin-bottom:4px';
+        var mTitle=document.createElement('span');
+        mTitle.style.cssText='font-size:12px;font-weight:700;color:#1e293b;flex:1';
+        mTitle.textContent='📅 '+mLabel;
+        var mCnt=document.createElement('span');
+        mCnt.style.cssText='font-size:11px;color:#64748b;background:#e2e8f0;padding:1px 7px;border-radius:10px;margin-right:6px';
+        mCnt.textContent=mdata.evs.length+' εργασίες';
+        var mPrint=document.createElement('button');
+        mPrint.textContent='🖨';
+        mPrint.title='Εκτύπωση μήνα';
+        mPrint.style.cssText='background:none;border:1px solid #e2e8f0;border-radius:5px;padding:1px 5px;cursor:pointer;font-size:11px;margin-right:5px';
+        mPrint.addEventListener('click',(function(idx,mk){return function(e){e.stopPropagation();printMemberMonthReport(idx,mk);};})(si,mkey));
+        var mArr=document.createElement('span');
+        mArr.style.cssText='font-size:10px;color:#94a3b8;transition:transform .2s;display:inline-block';
+        mArr.textContent='▶';
+        mHdr.appendChild(mTitle);mHdr.appendChild(mCnt);mHdr.appendChild(mPrint);mHdr.appendChild(mArr);
+        mWrap.appendChild(mHdr);
+
+        var mBody=document.createElement('div');
+        mBody.style.cssText='overflow:hidden;max-height:0;transition:max-height .3s ease;padding:0 2px';
+        mHdr.onclick=function(){
+          var open=mBody.style.maxHeight!=='0px'&&mBody.style.maxHeight!=='0';
+          mBody.style.maxHeight=open?'0':(mBody.scrollHeight+20)+'px';
+          mArr.style.transform=open?'':'rotate(90deg)';
+          mHdr.style.background=open?(isCurMonth?'#dbeafe':'#f1f5f9'):'#eff6ff';
+        };
+        mWrap.appendChild(mBody);
+
+        // Εκδηλώσεις του μήνα
+        var myEvs=mdata.evs;
       var wrap=document.createElement('div');
       wrap.style.cssText='margin-bottom:18px;';
 
@@ -1522,18 +1565,20 @@ function showMonthlySummary(){
           var dt=document.createElement('div');dt.style.cssText='font-size:11px;color:#64748b';
           dt.textContent=DAYS_GR[d.getDay()]+' '+parseInt(p[2])+' '+MONTHS_GEN[parseInt(p[1])-1];
           var role=document.createElement('div');role.style.cssText='font-size:10px;color:#94a3b8;flex-shrink:0';
-          role.textContent=ev.roles[si]||'';
+          role.textContent=ev.roles&&ev.roles[si]?ev.roles[si]:'';
           info.appendChild(t);info.appendChild(dt);
           row.appendChild(dot);row.appendChild(info);row.appendChild(role);
-          evList.appendChild(row);
-        });
-      }
+          mBody.appendChild(row);
+        }); // end myEvs
 
-      // Toggle collapse
+        evList.appendChild(mWrap);
+      }); // end memberMonths
+
+      // Toggle μέλος
       hdr.addEventListener('click',function(e){
         if(e.target===pBtn||pBtn.contains(e.target)) return;
         isOpen=!isOpen;
-        evList.style.maxHeight=isOpen?(evList.scrollHeight+20)+'px':'0';
+        evList.style.maxHeight=isOpen?(evList.scrollHeight+500)+'px':'0';
         arr.style.transform=isOpen?'rotate(180deg)':'rotate(0deg)';
         hdr.style.background=isOpen?'#eff6ff':'#f8fafc';
         hdr.style.borderColor=isOpen?'#93c5fd':'#e2e8f0';
@@ -1541,9 +1586,8 @@ function showMonthlySummary(){
 
       wrap.appendChild(hdr);
       wrap.appendChild(evList);
-      monthBody.appendChild(wrap);
+      content.appendChild(wrap);
     }); // end STAFF
-    }); // end monthKeys
   } else {
     // Non-admin: όλοι οι μήνες
     monthKeys.forEach(function(mkey){
@@ -1706,6 +1750,14 @@ function printMemberReport(si){
   overlay.appendChild(box);
   overlay.addEventListener('click',function(e){if(e.target===overlay)document.body.removeChild(overlay);});
   document.body.appendChild(overlay);
+}
+
+function printMemberMonthReport(si,mkey){
+  var MONTHS_FULL=['Ιανουάριος','Φεβρουάριος','Μάρτιος','Απρίλιος','Μάιος','Ιούνιος','Ιούλιος','Αύγουστος','Σεπτέμβριος','Οκτώβριος','Νοέμβριος','Δεκέμβριος'];
+  var MONTHS_GEN=['Ιανουαρίου','Φεβρουαρίου','Μαρτίου','Απριλίου','Μαΐου','Ιουνίου','Ιουλίου','Αυγούστου','Σεπτεμβρίου','Οκτωβρίου','Νοεμβρίου','Δεκεμβρίου'];
+  var DAYS_GR=['Κυριακή','Δευτέρα','Τρίτη','Τετάρτη','Πέμπτη','Παρασκευή','Σάββατο'];
+  var win=window.open('','_blank');
+  doPrint(si,[mkey],MONTHS_FULL,MONTHS_GEN,DAYS_GR,win);
 }
 
 function doPrint(si,selMonths,MONTHS_FULL,MONTHS_GEN,DAYS_GR,win){
