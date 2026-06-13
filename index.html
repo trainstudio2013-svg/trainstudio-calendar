@@ -1570,8 +1570,8 @@ function showMonthlySummary(){
           row.appendChild(dot);row.appendChild(info);row.appendChild(role);
           mBody.appendChild(row);
         }); // end myEvs
-
         evList.appendChild(mWrap);
+      } // end else (myEvs not empty)
       }); // end memberMonths
 
       // Toggle μέλος
@@ -1615,15 +1615,15 @@ function showMonthlySummary(){
       monthHdr.appendChild(monthTitle);monthHdr.appendChild(monthCount);monthHdr.appendChild(monthArrow);
       monthWrap.appendChild(monthHdr);
 
-      var monthBody=document.createElement('div');
-      monthBody.style.cssText='overflow:hidden;max-height:'+(isCurMonth?'9999':'0')+'px;transition:max-height .3s ease';
+      var mBody2=document.createElement('div');
+      mBody2.style.cssText='overflow:hidden;max-height:'+(isCurMonth?'9999':'0')+'px;transition:max-height .3s ease';
       monthArrow.style.transform=isCurMonth?'rotate(180deg)':'rotate(0deg)';
       monthHdr.onclick=function(){
-        var open=monthBody.style.maxHeight!=='0px'&&monthBody.style.maxHeight!=='0';
-        monthBody.style.maxHeight=open?'0':'9999px';
+        var open=mBody2.style.maxHeight!=='0px'&&mBody2.style.maxHeight!=='0';
+        mBody2.style.maxHeight=open?'0':'9999px';
         monthArrow.style.transform=open?'rotate(0deg)':'rotate(180deg)';
       };
-      monthWrap.appendChild(monthBody);
+      monthWrap.appendChild(mBody2);
       content.appendChild(monthWrap);
 
       myEvs.forEach(function(ev){
@@ -1650,10 +1650,10 @@ function showMonthlySummary(){
         dt.textContent=DAYS_GR[d.getDay()]+' '+parseInt(p[2])+' '+MONTHS_GEN[parseInt(p[1])-1]+' — '+(ev.roles[curUser]||'');
         info.appendChild(t);info.appendChild(dt);
         row.appendChild(dot);row.appendChild(info);
-        monthBody.appendChild(row);
+        mBody2.appendChild(row);
       }); // end myEvs
     }); // end monthKeys non-admin
-  }
+  } // end else non-admin
 
   document.getElementById('summaryOverlay').style.display='block';
   document.getElementById('summaryPanel').style.display='block';
