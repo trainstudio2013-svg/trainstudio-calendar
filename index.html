@@ -444,6 +444,17 @@ function saveEv(ev){
     notes:ev.notes||'',
     cat:ev.cat||'other'
   });
+  // Backup αναθέσεων στο assignments_history
+  if(ev.assigned&&ev.assigned.length>0){
+    sbFetch('assignments_history','POST',{
+      event_id:ev.id,
+      event_title:ev.title||'',
+      event_date:ev.date||'',
+      assigned:ev.assigned,
+      roles:ev.roles||{},
+      saved_by:curUser
+    },'return=minimal');
+  }
   // Αυτόματο re-render ημερολογίου και panel μετά από κάθε αποθήκευση
   renderCal();
   renderMobileList();
