@@ -314,7 +314,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);hei
       </div>
       <div style="display:flex;align-items:center;gap:6px">
         <div id="currentUserBadge" style="font-size:12px;font-weight:600;color:#475569;background:#f1f5f9;border:1px solid #e2e8f0;border-radius:20px;padding:4px 12px;white-space:nowrap;display:none"></div>
-        <button id="monthSummaryBtn" onclick="showMonthlySummary()" style="font-size:11px;padding:5px 10px;background:#f1f5f9;border:1px solid #e2e8f0;border-radius:8px;cursor:pointer;font-family:'DM Sans',sans-serif;color:#475569;font-weight:500;white-space:nowrap">📋 Δουλειές μήνα</button>
+        <button id="monthSummaryBtn" onclick="showMonthlySummary()" style="font-size:11px;padding:5px 10px;background:#f1f5f9;border:1px solid #e2e8f0;border-radius:8px;cursor:pointer;font-family:'DM Sans',sans-serif;color:#475569;font-weight:500;white-space:nowrap">📋 Δουλειές ανά μήνα</button>
         <button id="notifyAllBtn" onclick="sendAllNotifications()" style="font-size:11px;padding:5px 10px;background:#eff6ff;border:1px solid #93c5fd;border-radius:8px;cursor:pointer;font-family:'DM Sans',sans-serif;color:#2563eb;font-weight:500;white-space:nowrap;display:none">📧 Ειδοποίηση όλων</button>
       </div>
       <div style="display:flex;align-items:center;gap:8px">
@@ -1404,23 +1404,64 @@ function showMonthlySummary(){
   var DAYS_GR=['Κυρ','Δευ','Τρι','Τετ','Πεμ','Παρ','Σαβ'];
   var catColors={megaro:'#7c3aed',other:'#d97706',studio:'#059669',ds:'#0284c7',setup:'#db2777',presetup:'#16a34a'};
 
-  // Εκδηλώσεις του τρέχοντος μήνα
-  var monthEvs=EVENTS.filter(function(ev){
-    if(!ev.date) return false;
+  // Όλες οι εκδηλώσεις ομαδοποιημένες ανά μήνα
+  var allEvs=EVENTS.filter(function(ev){return ev.date;});
+  allEvs.sort(function(a,b){return b.date.localeCompare(a.date);}); // Νεότερες πρώτα
+
+  // Ομαδοποίηση ανά μήνα
+  var monthMap={};
+  allEvs.forEach(function(ev){
     var p=ev.date.split('-');
-    return parseInt(p[0])===curY && parseInt(p[1])-1===curM;
+    var key=p[0]+'-'+p[1]; // π.χ. "2026-06"
+    if(!monthMap[key]) monthMap[key]={year:parseInt(p[0]),month:parseInt(p[1])-1,evs:[]};
+    monthMap[key].evs.push(ev);
   });
-  monthEvs.sort(function(a,b){return a.date.localeCompare(b.date);});
+  var monthKeys=Object.keys(monthMap).sort(function(a,b){return b.localeCompare(a);});
 
   var title=document.getElementById('summaryTitle');
   var content=document.getElementById('summaryContent');
-  title.textContent='📋 '+MONTHS_FULL[curM]+' '+curY;
+  title.textContent='📋 Δουλειές ανά μήνα';
   content.innerHTML='';
 
   if(isAdmin()){
-    // Admin: εμφάνιση ανά μέλος
+    // Admin: εμφάνιση ανά μήνα → ανά μέλος
+    monthKeys.forEach(function(mkey){
+      var mdata=monthMap[mkey];
+      var monthEvs=mdata.evs;
+      var mLabel=MONTHS_FULL[mdata.month]+' '+mdata.year;
+      var isCurMonth=(mdata.year===curY && mdata.month===curM);
+
+      // Μήνας header — accordion
+      var monthWrap=document.createElement('div');
+      monthWrap.style.cssText='margin-bottom:16px;';
+      var monthHdr=document.createElement('div');
+      monthHdr.style.cssText='display:flex;align-items:center;justify-content:space-between;padding:10px 14px;background:'+(isCurMonth?'#dbeafe':'#f1f5f9')+';border-radius:10px;border:1.5px solid '+(isCurMonth?'#93c5fd':'#e2e8f0')+';cursor:pointer;margin-bottom:8px';
+      var monthTitle=document.createElement('div');
+      monthTitle.style.cssText='font-size:14px;font-weight:800;color:#1e293b';
+      monthTitle.textContent='📅 '+mLabel;
+      var monthCount=document.createElement('div');
+      monthCount.style.cssText='font-size:11px;color:#64748b;background:#e2e8f0;padding:2px 8px;border-radius:12px;margin-right:8px';
+      monthCount.textContent=monthEvs.length+' εκδηλώσεις';
+      var monthArrow=document.createElement('span');
+      monthArrow.style.cssText='font-size:12px;color:#94a3b8;transition:transform .2s;display:inline-block';
+      monthArrow.textContent='▼';
+      monthHdr.appendChild(monthTitle);monthHdr.appendChild(monthCount);monthHdr.appendChild(monthArrow);
+      monthWrap.appendChild(monthHdr);
+
+      var monthBody=document.createElement('div');
+      monthBody.style.cssText='overflow:hidden;max-height:'+(isCurMonth?'9999':'0')+'px;transition:max-height .3s ease;padding:0 4px';
+      monthArrow.style.transform=isCurMonth?'rotate(180deg)':'rotate(0deg)';
+      monthHdr.onclick=function(){
+        var open=monthBody.style.maxHeight!=='0px'&&monthBody.style.maxHeight!=='0';
+        monthBody.style.maxHeight=open?'0':'9999px';
+        monthArrow.style.transform=open?'rotate(0deg)':'rotate(180deg)';
+        monthHdr.style.background=open?'#f1f5f9':'#dbeafe';
+      };
+      monthWrap.appendChild(monthBody);
+      content.appendChild(monthWrap);
+
     STAFF.forEach(function(st,si){
-      var myEvs=monthEvs.filter(function(ev){return ev.assigned.indexOf(si)!==-1;});
+      var myEvs=monthEvs.filter(function(ev){return ev.assigned&&ev.assigned.indexOf(si)!==-1;});
       var wrap=document.createElement('div');
       wrap.style.cssText='margin-bottom:18px;';
 
@@ -1500,21 +1541,47 @@ function showMonthlySummary(){
 
       wrap.appendChild(hdr);
       wrap.appendChild(evList);
-      content.appendChild(wrap);
-    });
+      monthBody.appendChild(wrap);
+    }); // end STAFF
+    }); // end monthKeys
   } else {
-    // Non-admin: μόνο οι δικές του
-    var myEvs=monthEvs.filter(function(ev){return ev.assigned.indexOf(curUser)!==-1;});
-    var hdr=document.createElement('div');
-    hdr.style.cssText='font-size:13px;font-weight:600;color:#475569;margin-bottom:12px';
-    hdr.textContent=STAFF[curUser].name+' — '+myEvs.length+' εργασίες '+MONTHS_GEN[curM];
-    content.appendChild(hdr);
+    // Non-admin: όλοι οι μήνες
+    monthKeys.forEach(function(mkey){
+      var mdata=monthMap[mkey];
+      var myEvs=mdata.evs.filter(function(ev){return ev.assigned&&ev.assigned.indexOf(curUser)!==-1;});
+      if(myEvs.length===0) return;
 
-    if(myEvs.length===0){
-      var nd=document.createElement('div');nd.style.cssText='text-align:center;color:#94a3b8;padding:30px 0;font-size:13px';
-      nd.textContent='Δεν συμμετείχες σε εκδηλώσεις αυτό τον μήνα';
-      content.appendChild(nd);
-    } else {
+      var isCurMonth=(mdata.year===curY && mdata.month===curM);
+      var mLabel=MONTHS_FULL[mdata.month]+' '+mdata.year;
+
+      // Μήνας header
+      var monthWrap=document.createElement('div');
+      monthWrap.style.cssText='margin-bottom:12px;';
+      var monthHdr=document.createElement('div');
+      monthHdr.style.cssText='display:flex;align-items:center;justify-content:space-between;padding:8px 12px;background:'+(isCurMonth?'#dbeafe':'#f1f5f9')+';border-radius:10px;border:1.5px solid '+(isCurMonth?'#93c5fd':'#e2e8f0')+';cursor:pointer;margin-bottom:6px';
+      var monthTitle=document.createElement('div');
+      monthTitle.style.cssText='font-size:13px;font-weight:700;color:#1e293b;flex:1';
+      monthTitle.textContent='📅 '+mLabel;
+      var monthCount=document.createElement('div');
+      monthCount.style.cssText='font-size:11px;color:#64748b;background:#e2e8f0;padding:2px 8px;border-radius:12px;margin-right:8px';
+      monthCount.textContent=myEvs.length+' εργασίες';
+      var monthArrow=document.createElement('span');
+      monthArrow.style.cssText='font-size:12px;color:#94a3b8;transition:transform .2s;display:inline-block';
+      monthArrow.textContent='▼';
+      monthHdr.appendChild(monthTitle);monthHdr.appendChild(monthCount);monthHdr.appendChild(monthArrow);
+      monthWrap.appendChild(monthHdr);
+
+      var monthBody=document.createElement('div');
+      monthBody.style.cssText='overflow:hidden;max-height:'+(isCurMonth?'9999':'0')+'px;transition:max-height .3s ease';
+      monthArrow.style.transform=isCurMonth?'rotate(180deg)':'rotate(0deg)';
+      monthHdr.onclick=function(){
+        var open=monthBody.style.maxHeight!=='0px'&&monthBody.style.maxHeight!=='0';
+        monthBody.style.maxHeight=open?'0':'9999px';
+        monthArrow.style.transform=open?'rotate(0deg)':'rotate(180deg)';
+      };
+      monthWrap.appendChild(monthBody);
+      content.appendChild(monthWrap);
+
       myEvs.forEach(function(ev){
         var p=ev.date.split('-');
         var d=new Date(parseInt(p[0]),parseInt(p[1])-1,parseInt(p[2]));
@@ -1539,9 +1606,9 @@ function showMonthlySummary(){
         dt.textContent=DAYS_GR[d.getDay()]+' '+parseInt(p[2])+' '+MONTHS_GEN[parseInt(p[1])-1]+' — '+(ev.roles[curUser]||'');
         info.appendChild(t);info.appendChild(dt);
         row.appendChild(dot);row.appendChild(info);
-        content.appendChild(row);
-      });
-    }
+        monthBody.appendChild(row);
+      }); // end myEvs
+    }); // end monthKeys non-admin
   }
 
   document.getElementById('summaryOverlay').style.display='block';
