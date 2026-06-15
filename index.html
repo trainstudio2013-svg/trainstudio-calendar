@@ -3234,6 +3234,23 @@ async function checkMissingEquipment(){
   }catch(e){console.log('checkMissing error:',e);}
 }
 
+function findItemName(itemId){
+  // Ψάχνει σε dynamicCatalog
+  var found=null;
+  dynamicCatalog.forEach(function(cat){
+    getCatItems(cat).forEach(function(i){if(i.id===itemId) found=i.name;});
+  });
+  if(found) return found;
+  // Ψάχνει σε PACK_CATALOG
+  PACK_CATALOG.forEach(function(cat){
+    getCatItems(cat).forEach(function(i){if(i.id===itemId) found=i.name;});
+  });
+  if(found) return found;
+  // Fallback: μορφοποίηση του ID (αφαίρεση suffix _mq...)
+  var clean=itemId.replace(/_mq[a-z0-9]+$/i,'').replace(/_/g,' ');
+  return clean.charAt(0).toUpperCase()+clean.slice(1)+'*';
+}
+
 function showMissingEquipment(){
   var missing=window._missingEquip||[];
   if(missing.length===0) return;
@@ -3281,18 +3298,8 @@ function showMissingEquipment(){
       var itemRow=document.createElement('div');
       itemRow.style.cssText='display:flex;align-items:center;gap:8px;padding:4px 0;font-size:12px;color:#475569';
 
-      // Βρες το όνομα (ψάχνει και στον δυναμικό και στον στατικό κατάλογο)
-      var itemName=item.item_id;
-      var catalogToSearch=dynamicCatalog.length>0?dynamicCatalog:PACK_CATALOG;
-      catalogToSearch.forEach(function(cat){
-        getCatItems(cat).forEach(function(i){if(i.id===item.item_id)itemName=i.name;});
-      });
-      // Fallback: αν δεν βρέθηκε στον κύριο κατάλογο, ψάχνει και στον άλλο
-      if(itemName===item.item_id && dynamicCatalog.length>0){
-        PACK_CATALOG.forEach(function(cat){
-          getCatItems(cat).forEach(function(i){if(i.id===item.item_id)itemName=i.name;});
-        });
-      }
+      // Βρες το όνομα — ψάχνει παντού
+      var itemName=findItemName(item.item_id);
 
       itemRow.innerHTML='<span style="color:#dc2626">⚠️</span> '+itemName+' <span style="color:#dc2626;font-weight:700;font-family:DM Mono,monospace">×'+item.qty+'</span>';
       evDiv.appendChild(itemRow);
