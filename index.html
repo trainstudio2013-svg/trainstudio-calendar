@@ -3317,38 +3317,108 @@ function printPackingList(ev,packState){
   var d=new Date(parseInt(dateParts[0]),parseInt(dateParts[1])-1,parseInt(dateParts[2]));
   var dateStr=DAYS_GR[d.getDay()]+' '+parseInt(dateParts[2])+' '+MONTHS_GR[parseInt(dateParts[1])-1]+' '+dateParts[0];
 
-  var html='<!DOCTYPE html><html><head><meta charset="utf-8">';
-  html+='<title>Packing List — '+ev.title+'</title>';
-  html+='<style>';
-  html+='body{font-family:Arial,sans-serif;padding:30px;color:#1e293b;font-size:13px}';
-  html+='.header{border-bottom:2px solid #2563eb;padding-bottom:12px;margin-bottom:20px}';
-  html+='.title{font-size:20px;font-weight:700;color:#2563eb}';
-  html+='.date{font-size:13px;color:#475569;margin-top:4px}';
-  html+='.cat{font-size:11px;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:.06em;margin:16px 0 8px;border-bottom:1px solid #e2e8f0;padding-bottom:4px}';
-  html+='.item{display:flex;align-items:center;gap:12px;padding:7px 0;border-bottom:1px solid #f1f5f9}';
-  html+='.check{width:18px;height:18px;border:2px solid #475569;border-radius:3px;flex-shrink:0}';
-  html+='.item-name{flex:1;font-size:13px}';
-  html+='.item-qty{font-size:13px;font-weight:700;color:#2563eb;min-width:30px;text-align:right}';
-  html+='.total{margin-top:20px;font-size:12px;color:#64748b;border-top:1px solid #e2e8f0;padding-top:12px}';
-  html+='@media print{body{padding:15px}}';
-  html+='</style></head><body>';
-  html+='<div class="header"><div class="title">📦 '+ev.title+'</div>';
-  html+='<div class="date">'+dateStr+(ev.time?' — '+ev.time:'')+'</div></div>';
-
+  // Συλλογή όλων των items που έχουν ποσότητα > 0
+  var allItems=[];
   var total=0;
   var catalogForPrint=dynamicCatalog.length>0?dynamicCatalog:PACK_CATALOG;
   catalogForPrint.forEach(function(cat){
     var catItems=getCatItems(cat).filter(function(item){return packState[item.id]>0;});
     if(catItems.length===0) return;
-    html+='<div class="cat">'+cat.cat+'</div>';
+    // Προσθήκη header κατηγορίας ως ειδικό item
+    allItems.push({isHeader:true, label:cat.cat});
     catItems.forEach(function(item){
       var qty=packState[item.id];
       total+=qty;
-      html+='<div class="item"><div class="check"></div><div class="item-name">'+item.name+'</div><div class="item-qty">×'+qty+'</div></div>';
+      allItems.push({isHeader:false, name:item.name, qty:qty});
     });
   });
 
-  html+='<div class="total">Σύνολο: '+total+' τεμάχια</div>';
+  // Διαίρεση σε 2 στήλες (αριστερά / δεξιά)
+  var half=Math.ceil(allItems.length/2);
+  var leftCol=allItems.slice(0,half);
+  var rightCol=allItems.slice(half);
+
+  function renderCol(items){
+    var html='';
+    var rowIdx=0;
+    items.forEach(function(it){
+      if(it.isHeader){
+        html+='<tr><td colspan="3" class="cat-header">'+it.label+'</td></tr>';
+      } else {
+        var zebra=rowIdx%2===0?'row-even':'row-odd';
+        html+='<tr class="'+zebra+'">'
+          +'<td class="cell-check"><div class="check"></div></td>'
+          +'<td class="cell-name">'+it.name+'</td>'
+          +'<td class="cell-qty">×'+it.qty+'</td>'
+          +'</tr>';
+        rowIdx++;
+      }
+    });
+    return html;
+  }
+
+  var html='<!DOCTYPE html><html><head><meta charset="utf-8">';
+  html+='<title>Packing List — '+ev.title+'</title>';
+  html+='<style>';
+  html+='*{box-sizing:border-box;margin:0;padding:0}';
+  html+='body{font-family:Arial,sans-serif;padding:20px;color:#1e293b;font-size:12px}';
+  html+='.header{border-bottom:2px solid #2563eb;padding-bottom:10px;margin-bottom:16px}';
+  html+='.title{font-size:18px;font-weight:700;color:#2563eb}';
+  html+='.date{font-size:12px;color:#475569;margin-top:3px}';
+  html+='.two-col{display:flex;gap:20px;align-items:flex-start}';
+  html+='.col{flex:1;min-width:0}';
+  html+='table{width:100%;border-collapse:collapse}';
+  html+='.cat-header{font-size:10px;font-weight:700;color:#fff;background:#2563eb;text-transform:uppercase;letter-spacing:.05em;padding:4px 6px;margin-top:4px}';
+  html+='.row-even{background:#f8fafc}';
+  html+='.row-odd{background:#fff}';
+  html+='.cell-check{width:22px;padding:5px 4px}';
+  html+='.cell-name{padding:5px 4px;font-size:12px}';
+  html+='.cell-qty{width:32px;padding:5px 4px;font-weight:700;color:#2563eb;text-align:right;font-size:12px}';
+  html+='.check{width:14px;height:14px;border:1.5px solid #64748b;border-radius:2px;display:inline-block}';
+  html+='.cell-notes{width:80px;padding:5px 4px;border-left:1px dashed #cbd5e1;color:#94a3b8;font-size:11px}';
+  html+='.total{margin-top:16px;font-size:11px;color:#64748b;border-top:1px solid #e2e8f0;padding-top:10px;text-align:right}';
+  html+='@media print{body{padding:10px}.two-col{gap:14px}}';
+  html+='</style></head><body>';
+  html+='<div class="header"><div class="title">📦 '+ev.title+'</div>';
+  html+='<div class="date">'+dateStr+(ev.time?' — '+ev.time:'')+'</div></div>';
+
+  html+='<div class="two-col">';
+  // Αριστερή στήλη
+  html+='<div class="col"><table>';
+  html+='<colgroup><col style="width:22px"><col><col style="width:32px"><col style="width:80px"></colgroup>';
+  html+='<thead><tr style="background:#e2e8f0"><th class="cell-check"></th><th style="padding:4px;font-size:11px;text-align:left">Εξοπλισμός</th><th class="cell-qty" style="font-size:11px">Ποσ.</th><th class="cell-notes" style="font-size:11px;text-align:left">Σημειώσεις</th></tr></thead>';
+  html+='<tbody>';
+  var rowIdx=0;
+  leftCol.forEach(function(it){
+    if(it.isHeader){
+      html+='<tr><td colspan="4" class="cat-header">'+it.label+'</td></tr>';
+    } else {
+      var zebra=rowIdx%2===0?'row-even':'row-odd';
+      html+='<tr class="'+zebra+'"><td class="cell-check"><div class="check"></div></td><td class="cell-name">'+it.name+'</td><td class="cell-qty">×'+it.qty+'</td><td class="cell-notes"></td></tr>';
+      rowIdx++;
+    }
+  });
+  html+='</tbody></table></div>';
+
+  // Δεξιά στήλη
+  html+='<div class="col"><table>';
+  html+='<colgroup><col style="width:22px"><col><col style="width:32px"><col style="width:80px"></colgroup>';
+  html+='<thead><tr style="background:#e2e8f0"><th class="cell-check"></th><th style="padding:4px;font-size:11px;text-align:left">Εξοπλισμός</th><th class="cell-qty" style="font-size:11px">Ποσ.</th><th class="cell-notes" style="font-size:11px;text-align:left">Σημειώσεις</th></tr></thead>';
+  html+='<tbody>';
+  rowIdx=0;
+  rightCol.forEach(function(it){
+    if(it.isHeader){
+      html+='<tr><td colspan="4" class="cat-header">'+it.label+'</td></tr>';
+    } else {
+      var zebra=rowIdx%2===0?'row-even':'row-odd';
+      html+='<tr class="'+zebra+'"><td class="cell-check"><div class="check"></div></td><td class="cell-name">'+it.name+'</td><td class="cell-qty">×'+it.qty+'</td><td class="cell-notes"></td></tr>';
+      rowIdx++;
+    }
+  });
+  html+='</tbody></table></div>';
+  html+='</div>';
+
+  html+='<div class="total">Σύνολο: <strong>'+total+'</strong> τεμάχια</div>';
   html+='</body></html>';
 
   var win=window.open('','_blank');
