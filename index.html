@@ -703,7 +703,7 @@ function buildPanel(container,evs,ds){
         nd.textContent='Δεν έχει ανατεθεί ομάδα';card.appendChild(nd);
       }
     } else {
-      /* Non-admin: show only own role */
+      /* Non-admin: show own role + teammates */
       var myRole=ev.roles[curUser]||'—';
       if(myRole!=='—'){
         var roleLbl=document.createElement('div');roleLbl.className='sec-lbl';roleLbl.textContent='Ρόλος σου';card.appendChild(roleLbl);
@@ -711,6 +711,8 @@ function buildPanel(container,evs,ds){
         var roleWrap=document.createElement('div');roleWrap.style.cssText='margin-bottom:10px;';
         roleWrap.appendChild(roleTag);card.appendChild(roleWrap);
       }
+      /* Teammates αμέσως κάτω από τον ρόλο */
+      buildTeammates(card,ev);
     }
 
     /* ASSIGNMENT COLLAPSE (admin) */
@@ -728,8 +730,7 @@ function buildPanel(container,evs,ds){
     /* VEHICLES */
     buildVehicle(card,ev);
 
-    /* TEAMMATES - μη admin: βλέπει συναδέλφους */
-    buildTeammates(card,ev);
+
 
     /* STATUS - admin only */
     if(isAdmin()) buildStatus(card,ev);
@@ -967,12 +968,13 @@ function buildTeammates(parent,ev){
     var chip=document.createElement('div');
     chip.style.cssText='display:flex;align-items:center;gap:5px;padding:5px 10px;border-radius:20px;background:#f0fdf4;border:1.5px solid #86efac;font-size:12px;font-weight:600;color:#15803d;';
     var info = STAFF[member];
-    chip.textContent = '👤 ' + (info ? member : member);
+    var memberName = info ? info.name : ('Μέλος '+member);
+    chip.textContent = '👤 ' + memberName;
     // Αν υπάρχει ρόλος
     if(ev.roles && ev.roles[member]){
       var role=document.createElement('span');
       role.style.cssText='font-size:10px;color:#64748b;font-weight:400;margin-left:2px;';
-      role.textContent='· '+ev.roles[member];
+      role.textContent=' · '+ev.roles[member];
       chip.appendChild(role);
     }
     row.appendChild(chip);
