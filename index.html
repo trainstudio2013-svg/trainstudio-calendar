@@ -1840,6 +1840,8 @@ function renderMobileList(){
     var borderColor=isToday?'#2563eb':(groupEvs.length>1?'#94a3b8':'#e2e8f0');
     var borderWidth=groupEvs.length>1?'2px':'1.5px';
     group.style.cssText='background:#fff;border-radius:12px;border:'+borderWidth+' solid '+borderColor+';overflow:hidden;flex-shrink:0;box-shadow:0 1px 4px rgba(0,0,0,.06)';
+    if(isToday) group.dataset.isToday='1';
+    group.dataset.date=dateKey;
 
     // Header ημερομηνίας (μόνο αν υπάρχουν >1 εκδηλώσεις ή πάντα για ομοιομορφία)
     var hdr=document.createElement('div');
@@ -1907,6 +1909,23 @@ function renderMobileList(){
     el.appendChild(group);
   });
 
+  // Auto-scroll στη σημερινή ημέρα (μόνο όταν είμαστε στον τρέχοντα μήνα)
+  var isCurrentMonth = (curY===todayFull.getFullYear() && curM===todayFull.getMonth());
+  if(isCurrentMonth){
+    setTimeout(function(){
+      var todayGroup = el.querySelector('[data-is-today="1"]');
+      if(!todayGroup){
+        // Fallback: βρες το πρώτο group με ημερομηνία >= σήμερα
+        var allGroups = el.querySelectorAll('[data-date]');
+        for(var i=0;i<allGroups.length;i++){
+          if(allGroups[i].dataset.date>=todayStr){ todayGroup=allGroups[i]; break; }
+        }
+      }
+      if(todayGroup){
+        todayGroup.scrollIntoView({behavior:'auto',block:'start'});
+      }
+    },50);
+  }
 }
 
 function checkToday(){
