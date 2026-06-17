@@ -2700,6 +2700,28 @@ async function openPackingList(ev, openCatalog){
     if(Array.isArray(data)) data.forEach(function(row){existing[row.item_id]=row.qty;});
   }catch(e){}
 
+  // --- Έλεγχος διαθεσιμότητας: βρες άλλες εκδηλώσεις ΙΔΙΑΣ ημερομηνίας με δεσμευμένο εξοπλισμό ---
+  var conflictMap={}; // item_id -> [{eventTitle, qty}]
+  try{
+    var otherEventIds=EVENTS.filter(function(e){return e.date===ev.date && e.id!==ev.id;}).map(function(e){return e.id;});
+    if(otherEventIds.length>0){
+      var idsParam=otherEventIds.map(function(id){return encodeURIComponent(id);}).join(',');
+      var rc=await fetch(SB_URL+'/rest/v1/packing_lists?event_id=in.('+idsParam+')&select=event_id,item_id,qty',{
+        headers:{'apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY}
+      });
+      var cdata=await rc.json();
+      if(Array.isArray(cdata)){
+        cdata.forEach(function(row){
+          if(row.qty>0){
+            var otherEv=EVENTS.find(function(e){return e.id===row.event_id;});
+            if(!conflictMap[row.item_id]) conflictMap[row.item_id]=[];
+            conflictMap[row.item_id].push({eventTitle:otherEv?otherEv.title:'Άλλη εκδήλωση',qty:row.qty});
+          }
+        });
+      }
+    }
+  }catch(e){console.log('Conflict check error:',e);}
+
   var catalogToUse=dynamicCatalog.length>0?dynamicCatalog:PACK_CATALOG;
   var packState={};
   // Αρχικοποίηση packState από existing
@@ -2869,12 +2891,28 @@ async function openPackingList(ev, openCatalog){
         row.style.cssText='display:flex;align-items:center;gap:10px;padding:6px 8px;border-radius:7px;margin-bottom:2px;'+(curQty>0?'background:#eff6ff;border:1.5px solid #bfdbfe;':'border-bottom:1px solid #f8fafc;');
 
         var name=document.createElement('div');
-        name.style.cssText='flex:1;font-size:13px;color:#1e293b;font-weight:'+(curQty>0?'600':'400');
-        name.textContent=item.name;
+        name.style.cssText='flex:1;min-width:0';
+        var nameLabel=document.createElement('div');
+        nameLabel.style.cssText='font-size:13px;color:#1e293b;font-weight:'+(curQty>0?'600':'400');
+        nameLabel.textContent=item.name;
+        name.appendChild(nameLabel);
 
         var stockBadge=document.createElement('div');
         stockBadge.style.cssText='font-size:10px;color:'+(stock===0?'#ef4444':stock<=2?'#f59e0b':'#64748b')+';white-space:nowrap;font-family:"DM Mono",monospace';
         stockBadge.textContent='Διαθ: '+stock;
+
+        // Σύγκρουση διαθεσιμότητας με άλλη εκδήλωση την ίδια ημέρα
+        var conflictBadge=document.createElement('div');
+        conflictBadge.style.cssText='font-size:10px;color:#dc2626;white-space:nowrap;font-weight:700;display:none';
+        if(conflictMap[item.id] && conflictMap[item.id].length>0){
+          var totalConflictQty=conflictMap[item.id].reduce(function(s,c){return s+c.qty;},0);
+          var titles=conflictMap[item.id].map(function(c){return c.eventTitle+' ('+c.qty+'×)';}).join(', ');
+          conflictBadge.textContent='⚠️ Δεσμ.: '+titles;
+          conflictBadge.title='Ήδη δεσμευμένο σε: '+titles;
+          conflictBadge.style.display='block';
+          conflictBadge.style.marginTop='2px';
+        }
+        name.appendChild(conflictBadge);
 
         var qtyWrap=document.createElement('div');
         qtyWrap.style.cssText='display:flex;align-items:center;gap:5px';
@@ -2898,13 +2936,14 @@ async function openPackingList(ev, openCatalog){
         warn.textContent='⚠️';
 
         var depWarn=document.createElement('div');
-        depWarn.style.cssText='font-size:10px;color:#d97706;display:none;margin-top:3px;background:#fef9c3;padding:3px 6px;border-radius:5px;border:1px solid #fde047;display:none;align-items:center;justify-content:space-between;gap:6px';
+        depWarn.style.cssText='font-size:10px;color:#d97706;display:none;margin-bottom:3px;background:#fef9c3;padding:3px 6px;border-radius:5px;border:1px solid #fde047;display:none;align-items:center;justify-content:space-between;gap:6px';
         var depWarnClose=document.createElement('button');
         depWarnClose.textContent='✕';
         depWarnClose.style.cssText='background:none;border:none;font-size:11px;cursor:pointer;color:#d97706;padding:0 2px;flex-shrink:0;font-weight:700;line-height:1';
         depWarnClose.onclick=function(e){e.stopPropagation();depWarn.style.display='none';};
 
         (function(itm, rowEl, nameEl, numEl, warnEl, depWarnEl, btnPEl){
+          nameEl = nameLabel; // χρησιμοποίησε το εσωτερικό label, όχι τον wrapper
           function updateDisplay(newQty){
             newQty=Math.max(0,parseInt(newQty)||0);
             if(stock>0&&newQty>stock){warnEl.style.display='inline';warnEl.title='Έχεις μόνο '+stock+' στην αποθήκη';newQty=stock;}
@@ -2948,8 +2987,8 @@ async function openPackingList(ev, openCatalog){
 
         qtyWrap.appendChild(btnM);qtyWrap.appendChild(numInp);qtyWrap.appendChild(btnP);
         row.appendChild(name);row.appendChild(stockBadge);row.appendChild(qtyWrap);row.appendChild(warn);
-        itemContainer.appendChild(row);
         itemContainer.appendChild(depWarn);
+        itemContainer.appendChild(row);
         });// end subObj.items
 
         } else {
@@ -3024,6 +3063,21 @@ async function openPackingList(ev, openCatalog){
     saveBtn.textContent='💾 Αποθήκευση';
     saveBtn.style.cssText='flex:1;padding:10px;background:#2563eb;color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;font-family:"DM Sans",sans-serif';
     saveBtn.onclick=async function(){
+      // Έλεγχος για ενεργές συγκρούσεις διαθεσιμότητας πριν την αποθήκευση
+      var activeConflicts=[];
+      Object.keys(packState).forEach(function(id){
+        if(packState[id]>0 && conflictMap[id] && conflictMap[id].length>0){
+          var itemNm=findItemName(id);
+          var titles=conflictMap[id].map(function(c){return c.eventTitle;}).join(', ');
+          activeConflicts.push(itemNm+' (ήδη σε: '+titles+')');
+        }
+      });
+      if(activeConflicts.length>0){
+        var msg='⚠️ Προσοχή! Ο παρακάτω εξοπλισμός είναι ήδη δεσμευμένος σε άλλη εκδήλωση την ίδια ημέρα:\n\n'+activeConflicts.join('\n')+'\n\nΘέλεις να συνεχίσεις με την αποθήκευση;';
+        if(!confirm(msg)){
+          return;
+        }
+      }
       saveBtn.textContent='⏳ Αποθήκευση...';saveBtn.disabled=true;
       var rows=[];
       Object.keys(packState).forEach(function(id){
