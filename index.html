@@ -421,8 +421,11 @@ function sbFetch(path,method,body,prefer){
 function deleteEv(ev){
   if(!confirm('Διαγραφή εκδήλωσης "'+ev.title+'";\nΑυτή η ενέργεια δεν αναιρείται.')) return;
   sbFetch('events?id=eq.'+encodeURIComponent(ev.id),'DELETE');
+  // Αυτόματη επιστροφή εξοπλισμού στην αποθήκη (διαγραφή packing_list της εκδήλωσης)
+  sbFetch('packing_lists?event_id=eq.'+encodeURIComponent(ev.id),'DELETE');
   EVENTS=EVENTS.filter(function(e){return e.id!==ev.id;});
   renderCal();
+  checkMissingEquipment();
   // Κλείσιμο drawer/side
   if(isPortrait()){
     document.getElementById('drawer').classList.remove('open');
@@ -459,7 +462,7 @@ function saveEv(ev){
   renderCal();
   renderMobileList();
   if(ev.date){
-    var dayEvs=EVENTS.filter(function(e){return e.date===ev.date;});
+    var dayEvs=EVENTS.filter(function(e){return e.date===ev.date && (isAdmin()||e.assigned.indexOf(curUser)!==-1);});
     if(isPortrait()){
       var db=document.getElementById('drawerBody');
       if(db&&document.getElementById('drawer').classList.contains('open')){
@@ -811,7 +814,7 @@ function buildPanel(container,evs,ds){
         item.addEventListener('mouseenter',function(){item.style.background='#eff6ff';});
         item.addEventListener('mouseleave',function(){item.style.background='#f8fafc';});
         item.addEventListener('click',(function(evRef){return function(){
-          var dayEvs=EVENTS.filter(function(e){return e.date===evRef.date;});
+          var dayEvs=EVENTS.filter(function(e){return e.date===evRef.date && (isAdmin()||e.assigned.indexOf(curUser)!==-1);});
           buildPanel(container,dayEvs,evRef.date);
         };})(ev));
 
@@ -1519,7 +1522,7 @@ function showMonthlySummary(){
           var row=document.createElement('div');
           row.style.cssText='display:flex;align-items:center;gap:8px;padding:6px 8px;border-radius:8px;margin-top:4px;background:#fff;border:1px solid #f1f5f9;cursor:pointer';
           row.addEventListener('click',function(){closeMonthlySummary();setTimeout(function(){
-            var ds=ev.date;var dayEvs=EVENTS.filter(function(e){return e.date===ds;});
+            var ds=ev.date;var dayEvs=EVENTS.filter(function(e){return e.date===ds && (isAdmin()||e.assigned.indexOf(curUser)!==-1);});
             if(isPortrait()){
               var db=document.getElementById('drawerBody');db.innerHTML='';
               buildPanel(db,dayEvs,ds);
@@ -1602,7 +1605,7 @@ function showMonthlySummary(){
         var row=document.createElement('div');
         row.style.cssText='display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:10px;margin-bottom:6px;background:#f8fafc;border:1px solid #e2e8f0;cursor:pointer';
         row.addEventListener('click',function(){closeMonthlySummary();setTimeout(function(){
-          var ds=ev.date;var dayEvs=EVENTS.filter(function(e){return e.date===ds;});
+          var ds=ev.date;var dayEvs=EVENTS.filter(function(e){return e.date===ds && (isAdmin()||e.assigned.indexOf(curUser)!==-1);});
           if(isPortrait()){
             var db=document.getElementById('drawerBody');db.innerHTML='';
             buildPanel(db,dayEvs,ds);
@@ -1885,7 +1888,7 @@ function renderMobileList(){
       item.addEventListener('click',(function(evRef){
         return function(){
           var ds=evRef.date;
-          var dayEvs=EVENTS.filter(function(e){return e.date===ds;});
+          var dayEvs=EVENTS.filter(function(e){return e.date===ds && (isAdmin()||e.assigned.indexOf(curUser)!==-1);});
           var drawerBody=document.getElementById('drawerBody');
           drawerBody.innerHTML='';
           buildPanel(drawerBody,dayEvs,ds);
@@ -3287,16 +3290,29 @@ async function checkMissingEquipment(){
     // Βρες ποιες εκδηλώσεις έχουν ήδη περάσει
     var evIds=[...new Set(packData.map(function(r){return r.event_id;}))];
     var missing=[];
+    var orphanIds=[];
 
     evIds.forEach(function(evId){
       var ev=EVENTS.find(function(e){return e.id===evId;});
-      if(!ev) return;
+      if(!ev){
+        // Η εκδήλωση δεν υπάρχει πια (διαγράφηκε) — ορφανό packing_list, καθάρισέ το αυτόματα
+        orphanIds.push(evId);
+        return;
+      }
       // Αν η εκδήλωση έχει περάσει
       if(ev.date<todayStr){
         var items=packData.filter(function(r){return r.event_id===evId;});
         if(items.length>0) missing.push({ev:ev,items:items});
       }
     });
+
+    // Καθάρισμα ορφανών packing_lists (εκδηλώσεις που δεν υπάρχουν πια)
+    if(orphanIds.length>0){
+      console.log('Καθαρισμός '+orphanIds.length+' ορφανών packing_lists...');
+      orphanIds.forEach(function(orphanId){
+        sbFetch('packing_lists?event_id=eq.'+encodeURIComponent(orphanId),'DELETE');
+      });
+    }
 
     var badge=document.getElementById('missingEquipBadge');
     if(missing.length>0){
