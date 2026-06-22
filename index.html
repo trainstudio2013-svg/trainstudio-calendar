@@ -3,7 +3,6 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
 <title>Train Studio</title>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600&family=DM+Mono:wght@400;500&display=swap');
@@ -2296,9 +2295,6 @@ function sendAssignmentEmail(ev, staffIndex){
   window.location.href = mailto;
 }
 
-// EmailJS init
-emailjs.init('diJGcKkGKKhYtf08H');
-
 function sendAllNotifications(){
   var DAYS_GR=['Κυριακή','Δευτέρα','Τρίτη','Τετάρτη','Πέμπτη','Παρασκευή','Σάββατο'];
   var MONTHS_GR=['Ιανουαρίου','Φεβρουαρίου','Μαρτίου','Απριλίου','Μαΐου','Ιουνίου','Ιουλίου','Αυγούστου','Σεπτεμβρίου','Οκτωβρίου','Νοεμβρίου','Δεκεμβρίου'];
@@ -2336,36 +2332,31 @@ function sendAllNotifications(){
     return;
   }
 
-  if(!confirm('Θα σταλεί email σε '+members.length+' μέλη. Συνέχεια;')) return;
+  if(!confirm('Θα ανοίξουν '+members.length+' email (ένα ανά μέλος) στο Mail app. Θα πρέπει να πατήσεις Αποστολή σε κάθε ένα. Συνέχεια;')) return;
 
   var btn=document.getElementById('notifyAllBtn');
-  btn.textContent='⏳ Αποστολή...';
+  btn.textContent='⏳ Άνοιγμα emails...';
   btn.disabled=true;
 
-  var sent=0,failed=0,total=members.length;
-  members.forEach(function(si){
+  var idx=0;
+  function openNext(){
+    if(idx>=members.length){
+      btn.textContent='✅ Άνοιξαν '+members.length+' emails';
+      btn.disabled=false;
+      setTimeout(function(){btn.textContent='📧 Ειδοποίηση όλων';},3000);
+      return;
+    }
+    var si=members[idx];
     var m=memberMap[si];
     var message=m.lines.join('\n');
-    emailjs.send('service_rtc8jns','template_7hyctos',{
-      to_name:m.name,
-      to_email:m.email,
-      message:message
-    }).then(function(){
-      sent++;
-      if(sent+failed===total){
-        btn.textContent='✅ Εστάλη σε '+sent+' μέλη';
-        btn.disabled=false;
-        setTimeout(function(){btn.textContent='📧 Ειδοποίηση όλων';},3000);
-      }
-    },function(){
-      failed++;
-      if(sent+failed===total){
-        btn.textContent='📧 Ειδοποίηση όλων';
-        btn.disabled=false;
-        alert('Απέτυχε η αποστολή σε '+failed+' μέλη.');
-      }
-    });
-  });
+    var subject='Train Studio: Δουλειές μήνα '+MONTHS_GR[curM]+' '+curY;
+    var body='Γεια σου '+m.name+',\n\nΟι δουλειές σου αυτό τον μήνα:\n\n'+message
+      +'\n\nΜπες στο ημερολόγιο για λεπτομέρειες:\nhttps://trainstudio2013-svg.github.io/trainstudio-calendar\n\nTrain Studio';
+    window.open('mailto:'+m.email+'?subject='+encodeURIComponent(subject)+'&body='+encodeURIComponent(body),'_blank');
+    idx++;
+    setTimeout(openNext,700);
+  }
+  openNext();
 }
 
 function sendTeamNotification(ev){
@@ -2385,33 +2376,35 @@ function sendTeamNotification(ev){
     return;
   }
 
-  var sent=0;var failed=0;
   var btn=document.getElementById('notifyBtn_'+ev.id);
-  if(btn){btn.textContent='⏳ Αποστολή...';btn.disabled=true;}
+  if(btn){btn.textContent='⏳ Άνοιγμα emails...';btn.disabled=true;}
 
-  members.forEach(function(member,idx){
+  if(!confirm('Θα ανοίξουν '+members.length+' email στο Mail app για την ομάδα. Συνέχεια;')){
+    if(btn){btn.textContent='📧 Ειδοποίηση ομάδας';btn.disabled=false;}
+    return;
+  }
+
+  var idx=0;
+  function openNext(){
+    if(idx>=members.length){
+      if(btn){btn.textContent='✅ Άνοιξαν '+members.length+' emails';btn.disabled=false;}
+      return;
+    }
+    var member=members[idx];
     var si=ev.assigned.find(function(s){return STAFF[s]===member;});
     var role=ev.roles[si]||'Μέλος ομάδας';
-    var message='Εκδήλωση: '+ev.title+'\nΗμερομηνία: '+dateStr+'\nΏρα: '+(ev.time||'—')+'\nΡόλος σου: '+role;
-
-    emailjs.send('service_rtc8jns','template_7hyctos',{
-      to_name: member.name,
-      to_email: member.email,
-      message: message
-    }).then(function(){
-      sent++;
-      if(sent+failed===members.length){
-        if(btn){btn.textContent='✅ Εστάλη σε '+sent+' μέλη';btn.disabled=false;}
-        if(failed>0) alert('Απέτυχε η αποστολή σε '+failed+' μέλη.');
-      }
-    },function(){
-      failed++;
-      if(sent+failed===members.length){
-        if(btn){btn.textContent='📧 Ειδοποίηση ομάδας';btn.disabled=false;}
-        alert('Απέτυχε η αποστολή σε '+failed+' μέλη.');
-      }
-    });
-  });
+    var subject='Train Studio: '+ev.title+' - '+dateStr;
+    var body='Γεια σου '+member.name+',\n\nΈχεις ανατεθεί στην παρακάτω εκδήλωση:\n\n'
+      +'Εκδήλωση: '+ev.title+'\n'
+      +'Ημερομηνία: '+dateStr+'\n'
+      +'Ώρα: '+(ev.time||'—')+'\n'
+      +'Ρόλος: '+role
+      +'\n\nΜπες στο ημερολόγιο για να επιβεβαιώσεις:\nhttps://trainstudio2013-svg.github.io/trainstudio-calendar\n\nTrain Studio';
+    window.open('mailto:'+member.email+'?subject='+encodeURIComponent(subject)+'&body='+encodeURIComponent(body),'_blank');
+    idx++;
+    setTimeout(openNext,700);
+  }
+  openNext();
 }
 
 /* ══ PACKING LIST ══════════════════════════════════════════ */
@@ -3097,6 +3090,24 @@ async function openPackingList(ev, openCatalog){
             headers:{'apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY,'Content-Type':'application/json','Prefer':'return=minimal'},
             body:JSON.stringify(rows)
           });
+          // Μόνιμη καταγραφή στο equipment_history (δεν διαγράφεται ποτέ, ούτε στην επιστροφή)
+          var historyRows=rows.map(function(r){
+            return {
+              event_id: ev.id,
+              event_title: ev.title,
+              event_date: ev.date,
+              item_id: r.item_id,
+              item_name: findItemName(r.item_id),
+              qty: r.qty
+            };
+          });
+          try{
+            await fetch(SB_URL+'/rest/v1/equipment_history',{
+              method:'POST',
+              headers:{'apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY,'Content-Type':'application/json','Prefer':'return=minimal'},
+              body:JSON.stringify(historyRows)
+            });
+          }catch(eh){console.log('equipment_history log error:',eh);}
         }
         saveBtn.textContent='✅ Αποθηκεύτηκε!';
         setTimeout(function(){document.body.removeChild(overlay);},800);
